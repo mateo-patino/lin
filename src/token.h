@@ -32,12 +32,19 @@ typedef enum {
     SMUL,
     DET,
     RREF,
-    INV
+    INV,
+    NUM_OP
 } operator_type;
 
 
 typedef struct {
    operator_type op;
 } operator_t;
+
+
+/* Arity, precedence, and operand type tables for operators */
+extern const char arity[NUM_OP];
+extern const char precedence[NUM_OP];
+
 
 #endif
