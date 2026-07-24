@@ -41,15 +41,15 @@ typedef struct {
    operator_type op;
 } operator_t;
 
-
-/* Arity, precedence, and operand type tables for operators */
-extern const char arity[NUM_OP];
-extern const char precedence[NUM_OP];
-extern const char associativity[NUM_OP];
-
 typedef enum {
     LEFT_ASSOC,
     RIGHT_ASSOC
 } assoc;
+
+/* Arity, precedence, and operand type tables for operators */
+extern const char arity[NUM_OP];
+extern const char precedence[NUM_OP];
+extern const assoc associativity[NUM_OP];
+
 
 #endif

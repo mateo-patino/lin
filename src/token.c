@@ -23,7 +23,7 @@ const char precedence[NUM_OP] = {
 };
 
 
-const assoc associativity[NUM_OP] {
+const assoc associativity[NUM_OP] = {
     [MAT_ADD] = LEFT_ASSOC,
     [MAT_SUB] = LEFT_ASSOC,
     [MAT_MUL] = LEFT_ASSOC,
