@@ -45,6 +45,11 @@ typedef struct {
 /* Arity, precedence, and operand type tables for operators */
 extern const char arity[NUM_OP];
 extern const char precedence[NUM_OP];
+extern const char associativity[NUM_OP];
 
+typedef enum {
+    LEFT_ASSOC,
+    RIGHT_ASSOC
+} assoc;
 
 #endif

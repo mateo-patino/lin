@@ -21,3 +21,14 @@ const char precedence[NUM_OP] = {
     [RREF] = 2,
     [INV] = 2
 };
+
+
+const assoc associativity[NUM_OP] {
+    [MAT_ADD] = LEFT_ASSOC,
+    [MAT_SUB] = LEFT_ASSOC,
+    [MAT_MUL] = LEFT_ASSOC,
+    [SMUL] = LEFT_ASSOC,
+    [DET] = RIGHT_ASSOC,
+    [RREF] = RIGHT_ASSOC,
+    [INV] = RIGHT_ASSOC
+};
