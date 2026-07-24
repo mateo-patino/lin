@@ -2,9 +2,15 @@
 #define TOKEN_H
 
 /*
-* Token interface...
+* This file defines the basic data types used by this program.
+*
+* The basic interface for operators and matrices is also defined here.
 */
 
+
+/*
+* Token interface...
+*/
 typedef enum {
     OPERATOR,
     SCALAR,
@@ -18,6 +24,12 @@ typedef struct {
     token_type type;
     void *obj;
 } token_t;
+
+
+typedef enum {
+    MATRIX_T,
+    SCALAR_T
+} operand_type;
 
 
 /*
@@ -39,6 +51,8 @@ typedef enum {
 
 typedef struct {
    operator_type op;
+   operand_type in_type;
+   operand_type out_type;
 } operator_t;
 
 typedef enum {
