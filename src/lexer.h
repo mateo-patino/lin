@@ -10,9 +10,19 @@
 */
 typedef enum {
     TOKENS_OK,
-    TOKENS_UNKNOWN_ARG,
+    TOKENS_INVALID_ARG,
+    TOKENS_INVALID_MATRIX,
     TOKENS_MEMORY_FAILURE 
 } tokens_status;
+
+
+/*
+* Creates a matrix token given the number of entries in the matrix (nrow * ncol). 
+* Internally, it calls strtok(NULL, TOKEN_DELIM) nrow*ncol times to consume the
+* entries of the matrix. Hence, it should only be called after strtok has been fed 
+* an initial string.
+*/
+tokens_status create_matrix_token(token_t *token, int nrow, int ncol);
 
 
 /*

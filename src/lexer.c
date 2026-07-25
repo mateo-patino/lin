@@ -42,31 +42,35 @@ RETURN_UPON_ERROR:
 * It calls set_error and returns NULL upon failure. No memory is allocated
 * upon failure.
 */
-static scalar_t *get_matrix_entries_from_str(size_t n) {
+static scalar_t *get_matrix_entries_from_str(int n, tokens_status *status) {
     scalar_t *data = malloc(n*sizeof(scalar_t));
     if (!data) {
         /* TODO: set memory error */
+        if (status) { *status = TOKENS_MEMORY_FAILURE; }
         return NULL;
     }
     matrix_status mat_st;
     char *str;
     scalar_t val;
-    for (size_t i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         str = strtok(NULL, TOKEN_DELIM);
         
         /* If strtok returns NULL, not enough entries exist */
         if (!str) {
             /* TODO: set error */
+            if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
 
         val = str_to_scalar_t(str, &mat_st);
         if (mat_st != MATRIX_OK) {
             /* TODO: could set error here */
+            if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
         data[i] = val;
     }
+    if (status) { *status = TOKENS_OK; }
     return data;
 
 RETURN_UPON_ERROR:
@@ -132,6 +136,30 @@ static token_t *resize_tokens(token_t *tokens, size_t *current_size) {
 }
 
 
+
+tokens_status create_matrix_token(token_t *token, int nrow, int ncol) {
+    if (nrow <= 0 || ncol <= 0 || !token) {
+        return TOKENS_INVALID_ARG;
+    }
+    
+    tokens_status status;
+    scalar_t *data = get_matrix_entries_from_str(nrow*ncol, &status);
+    if (!data || status != TOKENS_OK) {
+        return status;
+    }
+
+    matrix_t *mat = init_matrix(data, nrow, ncol);
+    if (!mat) {
+        free(data);
+        return TOKENS_MEMORY_FAILURE;
+    }
+    token->type = MATRIX;
+    token->obj = mat;
+
+    return TOKENS_OK;
+}
+
+
 token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_status *status) {
     if (!str || *str == '\0') {
         return NULL;
@@ -157,17 +185,22 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     char *tok_str;
     tokens_status st;
 
+    matrix_status mat_st;
     int nrow = -1;
     int ncol = -1;
 
-    /* Consume first token */
+    /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
 
     if (is_matrix_marker(tok_str, &nrow, &ncol)) {
-        
+        if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
+            if (status) { *status = st; }
+            free(m_str);
+            free(tokens);
+            return NULL;
+        } 
     }
-
-    if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
+    else if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
         if (status) { *status = st; }
         free(m_str);
         free(tokens);
