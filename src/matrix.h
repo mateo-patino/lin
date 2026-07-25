@@ -6,8 +6,8 @@ typedef double scalar_t;
 
 /* Matrix interface... */
 typedef struct {
-    int nrows;
-    int ncols;
+    int nrow;
+    int ncol;
     scalar_t *data;
 } matrix_t;
 
@@ -16,5 +16,17 @@ typedef enum {
     MATRIX_OK,
     MATRIX_INVALID_ENTRY
 } matrix_status;
+
+
+/*
+* Frees mat->data and mat pointers.
+*/
+void free_matrix(matrix_t *mat);
+
+/*
+* Parametrized constructor for matrix_t. Returns pointer to 
+* heap-allocated matrix_t and NULL upon failure.
+*/
+matrix_t *init_matrix(scalar_t *data, int nrow, int ncol);
 
 #endif
