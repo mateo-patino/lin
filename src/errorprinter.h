@@ -25,6 +25,12 @@ const char *get_error(void);
 bool set_error(const char *fmt, ...);
 
 
-
+/*
+* Returns a boolean indicating whether a message exists in the buffer. Calling has_error
+* immediately after clear_error returns false; doing so immediately after alling set_error
+* returns true.
+* 
+*/
+bool has_error(void);
 
 #endif

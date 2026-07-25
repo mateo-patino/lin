@@ -38,6 +38,6 @@ bool set_error(const char *fmt, ...) {
 }
 
 
-
-
-
+bool has_error(void) {
+    return has_msg;
+}
