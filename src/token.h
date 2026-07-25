@@ -1,6 +1,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#include <stdlib.h>
+
 /*
 * This file defines the basic data types used by this program.
 *
@@ -16,7 +18,8 @@ typedef enum {
     SCALAR,
     MATRIX,
     LPAREN,
-    RPAREN
+    RPAREN,
+    TOKENS_END /* signals the end of a token_t sequence */
 } token_type;
 
 
@@ -65,5 +68,17 @@ extern const char arity[NUM_OP];
 extern const char precedence[NUM_OP];
 extern const assoc associativity[NUM_OP];
 
+
+/*
+* Frees 'count' token_t->obj pointers in a 'tokens' array.
+* The 'tokens' pointer is not freed, however.
+*/
+void free_token_objs_by_count(token_t *tokens, size_t count);
+
+
+/*
+* Frees a token_t's obj member (but not the token itself).
+*/
+void free_token_obj(token_t *tok);
 
 #endif

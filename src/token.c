@@ -32,3 +32,22 @@ const assoc associativity[NUM_OP] = {
     [RREF] = RIGHT_ASSOC,
     [INV] = RIGHT_ASSOC
 };
+
+
+void free_token_objs_by_count(token_t *tokens, size_t count) {
+    if (!tokens) {
+        return;
+    }
+    for (size_t i = 0; i < count; i++) {
+        free_token_obj(tokens + i);
+    }
+}
+
+
+void free_token_obj(token_t *tok) {
+    if (!tok || !tok->obj) {
+        return;
+    }
+    /* NOTE: will likely have to add more logic as matrix_t and operator_t are developed */
+    free(tok->obj);
+}
