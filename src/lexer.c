@@ -185,26 +185,22 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     char *tok_str;
     tokens_status st;
 
-    matrix_status mat_st;
     int nrow = -1;
     int ncol = -1;
 
     /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
 
+    /* Check if tok_str is "axb", otherwise do standard tokenization */
     if (is_matrix_marker(tok_str, &nrow, &ncol)) {
         if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
             if (status) { *status = st; }
-            free(m_str);
-            free(tokens);
-            return NULL;
+            goto FREE_UPON_ERROR_1;
         } 
     }
     else if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
         if (status) { *status = st; }
-        free(m_str);
-        free(tokens);
-        return NULL;
+        goto FREE_UPON_ERROR_1;
     }
     tc++;
 
@@ -216,19 +212,19 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
             tokens = resize_tokens(tokens, &size);
             if (errno == ENOMEM) {
                 if (status) { *status = TOKENS_MEMORY_FAILURE; }
-                goto FREE_TOKENS_UPON_ERROR; 
+                goto FREE_UPON_ERROR_2; 
             }
         }
 
-        /* Check if tok_str is a matrix marker "axb" */
         if (is_matrix_marker(tok_str, &nrow, &ncol)) {
-
+            if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
+                if (status) { *status = st; }
+                goto FREE_UPON_ERROR_2;
+            } 
         }
-
-        /* Tokenize the current string at tok_str */
-        if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
+        else if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
             if (status) { *status = st; }
-            goto FREE_TOKENS_UPON_ERROR;
+            goto FREE_UPON_ERROR_2;
         }
         tc++;
     }
@@ -238,7 +234,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
         tokens = resize_tokens(tokens, &size);
         if (errno == ENOMEM) {
             if (status) { *status = TOKENS_MEMORY_FAILURE; }
-            goto FREE_TOKENS_UPON_ERROR;
+            goto FREE_UPON_ERROR_2;
         }
     }
     tokens[tc].type = TOKENS_END;
@@ -250,7 +246,12 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
     return tokens;
 
-FREE_TOKENS_UPON_ERROR:
+FREE_UPON_ERROR_1:
+    free(tokens);
+    free(m_str);
+    return NULL;
+
+FREE_UPON_ERROR_2:
     free_token_objs_by_count(tokens, tc);
     free(tokens);
     free(m_str);
