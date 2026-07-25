@@ -12,4 +12,9 @@ typedef struct {
 } matrix_t;
 
 
+typedef enum {
+    MATRIX_OK,
+    MATRIX_INVALID_ENTRY
+} matrix_status;
+
 #endif

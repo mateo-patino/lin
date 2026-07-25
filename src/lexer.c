@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "matrix.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -6,11 +7,79 @@
 #include <stdbool.h>
 #include <limits.h>
 
+
+/*
+* Returns a scalar_t according to 'str' upon success. 
+*
+* If no conversion is done, 0 is returned and the error is 
+* written to 'status' if not NULL.
+*/
+scalar_t str_to_scalar_t(const char *str, matrix_status *status) {
+    if (!str || *str == '\0') {
+        goto RETURN_UPON_ERROR;
+    }
+
+    char *endptr;
+    errno = 0;
+    double val = strtod(str, &endptr);
+
+    if (endptr == str || *endptr != '\0' || errno != 0) {
+        goto RETURN_UPON_ERROR;
+    }
+    if (status) { *status = MATRIX_OK; }
+    return (scalar_t)val;
+
+RETURN_UPON_ERROR:
+    if (status) { *status = MATRIX_INVALID_ENTRY; }
+    return 0;
+}
+
+
+/*
+* Calls strtok(NULL, TOKEN_DELIM) 'n' times and returns a pointer to a
+* heap-allocated array of 'n' scalar_t values upon success.
+*
+* It calls set_error and returns NULL upon failure. No memory is allocated
+* upon failure.
+*/
+static scalar_t *get_matrix_entries_from_str(size_t n) {
+    scalar_t *data = malloc(n*sizeof(scalar_t));
+    if (!data) {
+        /* TODO: set memory error */
+        return NULL;
+    }
+    matrix_status mat_st;
+    char *str;
+    scalar_t val;
+    for (size_t i = 0; i < n; i++) {
+        str = strtok(NULL, TOKEN_DELIM);
+        
+        /* If strtok returns NULL, not enough entries exist */
+        if (!str) {
+            /* TODO: set error */
+            goto RETURN_UPON_ERROR;
+        }
+
+        val = str_to_scalar_t(str, &mat_st);
+        if (mat_st != MATRIX_OK) {
+            /* TODO: could set error here */
+            goto RETURN_UPON_ERROR;
+        }
+        data[i] = val;
+    }
+    return data;
+
+RETURN_UPON_ERROR:
+    free(data);
+    return NULL;
+}
+
+
 /*
 * Returns true if 'str' has the form "axb" where "a" and "b" are positive integers
 * and false otherwise.
 */
-static bool is_matrix_marker(const char *str) {
+static bool is_matrix_marker(const char *str, int *nrow, int *ncol) {
     if (!str || *str == '\0' || *str == 'x') {
         return false;
     }
@@ -33,6 +102,9 @@ static bool is_matrix_marker(const char *str) {
     if (endptr == str || *endptr != '\0' || errno == ERANGE) {
         return false;
     }
+
+    if (nrow) { *nrow = a; }
+    if (ncol) { *ncol = b; }
 
     return true;
 }
@@ -85,8 +157,16 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     char *tok_str;
     tokens_status st;
 
+    int nrow = -1;
+    int ncol = -1;
+
     /* Consume first token */
     tok_str = strtok(m_str, TOKEN_DELIM);
+
+    if (is_matrix_marker(tok_str, &nrow, &ncol)) {
+        
+    }
+
     if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
         if (status) { *status = st; }
         free(m_str);
@@ -108,7 +188,9 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
         }
 
         /* Check if tok_str is a matrix marker "axb" */
-        if (is_matrix_marker())
+        if (is_matrix_marker(tok_str, &nrow, &ncol)) {
+
+        }
 
         /* Tokenize the current string at tok_str */
         if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
