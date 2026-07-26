@@ -35,6 +35,27 @@ const assoc associativity[NUM_OP] = {
 };
 
 
+/* Operator aliases */
+static const char *mat_add_alias[] = { "add", "plus", "+", NULL };
+static const char *mat_sub_alias[] = { "sub", "minus", "-", NULL };
+static const char *mat_mul_alias[] = { "mul", "times", "*", NULL };
+static const char *smul_alias[] = { "smul", "scale", "s*", NULL };
+static const char *det_alias[] = { "det", "determinant", "detof", NULL };
+static const char *rref_alias[] = { "rref", "reduced", NULL };
+static const char *inv_alias[] = { "inv", "inverse", NULL };
+
+const char **operator_alias[] = {
+    [MAT_ADD] = mat_add_alias,
+    [MAT_SUB] = mat_sub_alias,
+    [MAT_MUL] = mat_mul_alias,
+    [SMUL] = smul_alias,
+    [DET] = det_alias,
+    [RREF] = rref_alias,
+    [INV] = inv_alias,
+};
+
+
+
 void free_token_objs_by_count(token_t *tokens, size_t count) {
     if (!tokens) {
         return;

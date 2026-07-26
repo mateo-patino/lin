@@ -61,10 +61,11 @@ typedef enum {
     RIGHT_ASSOC
 } assoc;
 
-/* Arity, precedence, and operand type tables for operators */
+/* Arity, precedence, associativity, and alias tables for operators */
 extern const char arity[NUM_OP];
 extern const char precedence[NUM_OP];
 extern const assoc associativity[NUM_OP];
+extern const char **operator_alias[NUM_OP];
 
 
 /*
