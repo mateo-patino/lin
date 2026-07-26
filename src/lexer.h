@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include "token.h"
+#include "matrix.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -23,20 +24,20 @@ typedef enum {
 * entries of the matrix. Hence, it should only be called after strtok has been fed 
 * an initial string.
 */
-tokens_status create_matrix_token(token_t *token, int nrow, int ncol);
+tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned int ncol);
 
 
 /*
-* Tokenizes 'str' into a LPAREN or RPAREN token. The new token is written to 'dst'.
+* Tokenizes 'c' into a LPAREN or RPAREN token. The new token is written to 'dst'.
 * A tokens_status code is returned to indicate the success or failure of the tokenization.
 */
-tokens_status create_parens_token(const char *str, token_t *dst);
+tokens_status create_parens_token(const char c, token_t *dst);
 
 
 /*
-* Tokenizes 'str' into a scalar token. The new token is written to dst.
+* Creates a scalar token given a (valid) scalar value. The new token is written to dst.
 */
-tokens_status create_scalar_token(const char *str, token_t *dst);
+tokens_status create_scalar_token(scalar_t scalar, token_t *dst);
 
 
 /*
@@ -67,9 +68,18 @@ tokens_status create_token_from_str(const char *str, token_t *dst);
 
 
 /*
-* Returns true if 'str' is a valid operator label.
+* Returns true if 'str' is a valid operator label. If 'type' is not NULL, the operator type is
+* written there.
 */
-bool is_operator(const char *str);
+bool is_operator(const char *str, operator_type *type);
+
+
+/*
+* Returns true if 'str' is a valid scalar. If 'val' is not NULL, the scalar value is written there.
+* It is NON-REPORTING should 'str' not be a valid scalar. As such, it does not call str_to_scalar_t,
+* which is reporting.
+*/
+bool is_scalar(const char *str, scalar_t *val);
 
 /*
 * Tokens must be separated from each other by at least one of these characters below.

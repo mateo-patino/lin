@@ -44,7 +44,7 @@ RETURN_UPON_ERROR:
 * It calls set_error and returns NULL upon failure. No memory is allocated
 * upon failure.
 */
-static scalar_t *get_matrix_entries_from_str(int n, tokens_status *status) {
+static scalar_t *get_matrix_entries_from_str(unsigned int n, tokens_status *status) {
     scalar_t *data = malloc(n*sizeof(scalar_t));
     if (!data) {
         if (status) { *status = TOKENS_MEMORY_FAILURE; }
@@ -53,12 +53,12 @@ static scalar_t *get_matrix_entries_from_str(int n, tokens_status *status) {
     matrix_status mat_st;
     char *str;
     scalar_t val;
-    for (int i = 0; i < n; i++) {
+    for (unsigned int i = 0; i < n; i++) {
         str = strtok(NULL, TOKEN_DELIM);
         
         /* If strtok returns NULL, not enough entries exist */
         if (!str) {
-            set_error("Expected %i matrix entries, got %i\n", n, i);
+            set_error("Expected %u matrix entries, got %u\n", n, i);
             if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
@@ -81,10 +81,10 @@ RETURN_UPON_ERROR:
 
 
 /*
-* Returns true if 'str' has the form "axb" where "a" and "b" are positive integers
+* Returns true if 'str' has the form "axb" where "a" and "b" are positive unsigned integers
 * and false otherwise.
 */
-static bool is_matrix_marker(const char *str, int *nrow, int *ncol) {
+static bool is_matrix_marker(const char *str, unsigned int *nrow, unsigned int *ncol) {
     if (!str || *str == '\0' || *str == 'x') {
         return false;
     }
@@ -110,8 +110,19 @@ static bool is_matrix_marker(const char *str, int *nrow, int *ncol) {
         return false;
     }
 
-    if (nrow) { *nrow = a; }
-    if (ncol) { *ncol = b; }
+    if (!a || !b) {
+        set_error("Dimensions cannot be zero '%s'\n", original);
+        return false;
+    }
+
+    /* Check for uint overflow. a*b must fit inside of an unsigned int. */
+    if (a > UINT_MAX || b > UINT_MAX || a > UINT_MAX / b) {
+        set_error("Dimensions are too large '%s'\n", original);
+        return false;
+    }
+
+    if (nrow) { *nrow = (unsigned int)a; }
+    if (ncol) { *ncol = (unsigned int)b; }
 
     return true;
 }
@@ -140,7 +151,7 @@ static token_t *resize_tokens(token_t *tokens, size_t *current_size) {
 
 
 
-tokens_status create_matrix_token(token_t *token, int nrow, int ncol) {
+tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned int ncol) {
     if (nrow <= 0 || ncol <= 0 || !token) {
         return TOKENS_INVALID_ARG;
     }
@@ -164,12 +175,11 @@ tokens_status create_matrix_token(token_t *token, int nrow, int ncol) {
 }
 
 
-tokens_status create_parens_token(const char *str, token_t *dst) {
-    if (!str || *str == '\0' || strlen(str) > 1 || !dst) {
+tokens_status create_parens_token(const char c, token_t *dst) {
+    if (!dst) {
         return TOKENS_INVALID_ARG;
     }
 
-    char c = str[0];
     switch (c) {
         case '(':
             dst->type = LPAREN;
@@ -178,7 +188,7 @@ tokens_status create_parens_token(const char *str, token_t *dst) {
             dst->type = RPAREN;
             break;
         default:
-            set_error("Invalid parenthesis '%s'\n", c);
+            set_error("Invalid parenthesis '%c'\n", c);
             return TOKENS_INVALID_ARG;
     }
     dst->obj = NULL;
@@ -186,25 +196,16 @@ tokens_status create_parens_token(const char *str, token_t *dst) {
 }
 
 
-tokens_status create_scalar_token(const char *str, token_t *dst) {
-    if (!str || !dst) {
-        return TOKENS_INVALID_ARG;
-    }
-
-    matrix_status st;
-    scalar_t val = str_to_scalar_t(str, &st);
-    if (st != MATRIX_OK) {
-        set_error("Invalid scalar '%s'\n", str);
+tokens_status create_scalar_token(scalar_t scalar, token_t *dst) {
+    if (!dst) {
         return TOKENS_INVALID_ARG;
     }
     dst->type = SCALAR;
-
-    /* The scalar_t value must live in the heap */
     scalar_t *obj = malloc(sizeof(scalar_t));
     if (!obj) {
         return TOKENS_MEMORY_FAILURE;
     }
-    *obj = val;
+    *obj = scalar;
     dst->obj = obj;
 
     return TOKENS_OK;
@@ -236,8 +237,8 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     char *tok_str;
     tokens_status st;
 
-    int nrow = -1;
-    int ncol = -1;
+    unsigned int nrow = 0;
+    unsigned int ncol = 0;
 
     /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
@@ -286,6 +287,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
     /* Terminate the tokens array with the marker type TOKENS_END */
     if (tc == size) {
+        errno = 0;
         tokens = resize_tokens(tokens, &size);
         if (errno == ENOMEM) {
             if (status) { *status = TOKENS_MEMORY_FAILURE; }
@@ -318,11 +320,19 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     if (!str || *str == '\0') {
         return TOKENS_INVALID_ARG;
     }
+
+    /* in-out arguments */
+    operator_type op_type;
+    scalar_t val;
         
     /* Tokenize parenthesis */
     if (!strcmp(str, ")") || !strcmp(str, "(")) {
-        return create_parens_token(str, dst);
+        return create_parens_token(str[0], dst);
     }
+    else if (is_scalar(str, &val)) {
+        return create_scalar_token(val, dst); 
+    }
+    
 
     /* Tokenize scalar */
     matrix_status mat_status;
@@ -347,3 +357,13 @@ bool is_operator(const char *str) {
 
     for ()
 }
+
+
+bool is_scalar(const char *str, scalar_t *val) {
+    if (!str || *str == '\0') {
+        return false;
+    }
+    
+    
+}
+
