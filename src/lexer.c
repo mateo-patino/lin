@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "matrix.h"
+#include "errorprinter.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -24,6 +25,7 @@ scalar_t str_to_scalar_t(const char *str, matrix_status *status) {
     double val = strtod(str, &endptr);
 
     if (endptr == str || *endptr != '\0' || errno != 0) {
+        set_error("Invalid scalar '%s'\n", str);
         goto RETURN_UPON_ERROR;
     }
     if (status) { *status = MATRIX_OK; }
@@ -45,7 +47,6 @@ RETURN_UPON_ERROR:
 static scalar_t *get_matrix_entries_from_str(int n, tokens_status *status) {
     scalar_t *data = malloc(n*sizeof(scalar_t));
     if (!data) {
-        /* TODO: set memory error */
         if (status) { *status = TOKENS_MEMORY_FAILURE; }
         return NULL;
     }
@@ -57,14 +58,14 @@ static scalar_t *get_matrix_entries_from_str(int n, tokens_status *status) {
         
         /* If strtok returns NULL, not enough entries exist */
         if (!str) {
-            /* TODO: set error */
+            set_error("Expected %i matrix entries, got %i\n", n, i);
             if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
 
         val = str_to_scalar_t(str, &mat_st);
         if (mat_st != MATRIX_OK) {
-            /* TODO: could set error here */
+            set_error("Invalid entry '%s'\n", str);
             if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
@@ -87,12 +88,13 @@ static bool is_matrix_marker(const char *str, int *nrow, int *ncol) {
     if (!str || *str == '\0' || *str == 'x') {
         return false;
     }
+    const char *original = str;
     char *endptr;
     errno = 0;
     unsigned long a = strtoul(str, &endptr, 10);
     
     if (*endptr != 'x' || errno == ERANGE) {
-        /* TODO: use a global error message buffer and write a "invalid matrix dimension" message there.*/
+        set_error("Invalid dimensions '%s'\n", original);
         return false;
     }
     
@@ -104,6 +106,7 @@ static bool is_matrix_marker(const char *str, int *nrow, int *ncol) {
     errno = 0;
     unsigned long b = strtoul(str, &endptr, 10);
     if (endptr == str || *endptr != '\0' || errno == ERANGE) {
+        set_error("Invalid dimensions '%s'\n", original);
         return false;
     }
 
@@ -145,6 +148,7 @@ tokens_status create_matrix_token(token_t *token, int nrow, int ncol) {
     tokens_status status;
     scalar_t *data = get_matrix_entries_from_str(nrow*ncol, &status);
     if (!data || status != TOKENS_OK) {
+        set_error("Cannot get matrix entries.\n");
         return status;
     }
 
@@ -194,11 +198,13 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     /* Check if tok_str is "axb", otherwise do standard tokenization */
     if (is_matrix_marker(tok_str, &nrow, &ncol)) {
         if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
+            set_error("Invalid matrix starting at '%s'\n", tok_str);
             if (status) { *status = st; }
             goto FREE_UPON_ERROR_1;
         } 
     }
     else if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
+        set_error("Invalid argument '%s'\n", tok_str);
         if (status) { *status = st; }
         goto FREE_UPON_ERROR_1;
     }
@@ -218,11 +224,13 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
         if (is_matrix_marker(tok_str, &nrow, &ncol)) {
             if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
+                set_error("Invalid matrix starting at '%s'\n", tok_str);
                 if (status) { *status = st; }
                 goto FREE_UPON_ERROR_2;
             } 
         }
         else if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
+            set_error("Invalid argument '%s'\n", tok_str);
             if (status) { *status = st; }
             goto FREE_UPON_ERROR_2;
         }
@@ -261,7 +269,7 @@ FREE_UPON_ERROR_2:
 
 tokens_status create_token_from_str(const char *str, token_t *dst) {
     if (!str || *str == '\0') {
-        return ;
+        return TOKENS_INVALID_ARG;
     }
     
     
