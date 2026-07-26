@@ -129,7 +129,7 @@ static token_t *resize_tokens(token_t *tokens, size_t *current_size) {
         return NULL;
     }
     size_t new_size = 2 * (*current_size);
-    token_t *tmp = realloc(tokens, new_size);
+    token_t *tmp = realloc(tokens, new_size*sizeof(token_t));
     if (!tmp) {
         /* Note: memory at 'tokens' is still valid if realloc fails, so caller can free it */
         return tokens;
@@ -331,7 +331,19 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
         return create_scalar_token(str, dst);
     }
 
+    /* If it's not a parens nor scalar, it better be an operator (matrices handled elsewhere) */
+    if (is_operator(str)) {
 
-    return TOKENS_OK;
+    }
+
+    return TOKENS_INVALID_ARG;
 }
 
+
+bool is_operator(const char *str) {
+    if (!str || *str == '\0') {
+        return false;
+    } 
+
+    for ()
+}

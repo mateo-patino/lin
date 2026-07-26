@@ -4,6 +4,7 @@
 #include "token.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 /*
 * Tokens status model. TOKENS_OK means user input was correctly tokenized.
@@ -31,10 +32,12 @@ tokens_status create_matrix_token(token_t *token, int nrow, int ncol);
 */
 tokens_status create_parens_token(const char *str, token_t *dst);
 
+
 /*
 * Tokenizes 'str' into a scalar token. The new token is written to dst.
 */
 tokens_status create_scalar_token(const char *str, token_t *dst);
+
 
 /*
 * Takes a constant string and produces a token array terminated with a token of type TOKENS_END. 
@@ -61,6 +64,12 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 * The token_t 'obj' pointer points to a heap address and must be freed by the caller.
 */
 tokens_status create_token_from_str(const char *str, token_t *dst);
+
+
+/*
+* Returns true if 'str' is a valid operator label.
+*/
+bool is_operator(const char *str);
 
 /*
 * Tokens must be separated from each other by at least one of these characters below.
