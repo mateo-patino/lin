@@ -29,12 +29,6 @@ typedef struct {
 } token_t;
 
 
-typedef enum {
-    MATRIX_T,
-    SCALAR_T
-} operand_type;
-
-
 /*
 * Operator interface...
 */
@@ -51,6 +45,10 @@ typedef enum {
     NUM_OP
 } operator_type;
 
+typedef enum {
+    MATRIX_T,
+    SCALAR_T
+} operand_type;
 
 typedef struct {
    operator_type op;

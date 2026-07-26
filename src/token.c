@@ -1,4 +1,5 @@
 #include "token.h"
+#include "matrix.h"
 
 /* Table of operator arities */
 const char arity[NUM_OP] = {
@@ -48,6 +49,13 @@ void free_token_obj(token_t *tok) {
     if (!tok || !tok->obj) {
         return;
     }
-    /* NOTE: will likely have to add more logic as matrix_t and operator_t are developed */
-    free(tok->obj);
+    
+    if (tok->type == MATRIX) {
+        free_matrix((matrix_t *)tok->obj);
+    }
+    else if (tok->type == SCALAR) {
+        free(tok->obj);
+    }
+
+    /* NOTE: likely need to add more logic for operator_t */
 }
