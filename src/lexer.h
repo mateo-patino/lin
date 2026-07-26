@@ -32,6 +32,11 @@ tokens_status create_matrix_token(token_t *token, int nrow, int ncol);
 tokens_status create_parens_token(const char *str, token_t *dst);
 
 /*
+* Tokenizes 'str' into a scalar token. The new token is written to dst.
+*/
+tokens_status create_scalar_token(const char *str, token_t *dst);
+
+/*
 * Takes a constant string and produces a token array terminated with a token of type TOKENS_END. 
 * It returns a pointer to an TOKENS_END-terminated array of token_t upon sucess and NULL upon 
 * failure.

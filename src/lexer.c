@@ -186,6 +186,31 @@ tokens_status create_parens_token(const char *str, token_t *dst) {
 }
 
 
+tokens_status create_scalar_token(const char *str, token_t *dst) {
+    if (!str || !dst) {
+        return TOKENS_INVALID_ARG;
+    }
+
+    matrix_status st;
+    scalar_t val = str_to_scalar_t(str, &st);
+    if (st != MATRIX_OK) {
+        set_error("Invalid scalar '%s'\n", str);
+        return TOKENS_INVALID_ARG;
+    }
+    dst->type = SCALAR;
+
+    /* The scalar_t value must live in the heap */
+    scalar_t *obj = malloc(sizeof(scalar_t));
+    if (!obj) {
+        return TOKENS_MEMORY_FAILURE;
+    }
+    *obj = val;
+    dst->obj = obj;
+
+    return TOKENS_OK;
+}
+
+
 token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_status *status) {
     if (!str || *str == '\0') {
         return NULL;
@@ -294,10 +319,18 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
         return TOKENS_INVALID_ARG;
     }
         
-    /* Check parenthesis */
+    /* Tokenize parenthesis */
     if (!strcmp(str, ")") || !strcmp(str, "(")) {
         return create_parens_token(str, dst);
     }
+
+    /* Tokenize scalar */
+    matrix_status mat_status;
+    scalar_t scalar = str_to_scalar_t(str, &mat_status);
+    if (mat_status == MATRIX_OK) {
+        return create_scalar_token(str, dst);
+    }
+
 
     return TOKENS_OK;
 }
