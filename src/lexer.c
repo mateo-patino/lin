@@ -332,30 +332,21 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     else if (is_scalar(str, &val)) {
         return create_scalar_token(val, dst); 
     }
-    
-
-    /* Tokenize scalar */
-    matrix_status mat_status;
-    scalar_t scalar = str_to_scalar_t(str, &mat_status);
-    if (mat_status == MATRIX_OK) {
-        return create_scalar_token(str, dst);
+    else if (is_operator(str, &op_type)) {
+        return create_operator_token(op_type, dst);
     }
 
-    /* If it's not a parens nor scalar, it better be an operator (matrices handled elsewhere) */
-    if (is_operator(str)) {
-
-    }
-
+    set_error("Invalid argument '%s'\n", str);
     return TOKENS_INVALID_ARG;
 }
 
 
-bool is_operator(const char *str) {
+bool is_operator(const char *str, operator_type *type) {
     if (!str || *str == '\0') {
         return false;
     } 
-
-    for ()
+    /* TODO */
+    return true;
 }
 
 
@@ -364,6 +355,15 @@ bool is_scalar(const char *str, scalar_t *val) {
         return false;
     }
     
-    
+    char *endptr;
+    errno = 0;
+    double scalar = strtod(str, &endptr);
+
+    if (endptr == str || *endptr != '\0' || errno != 0) {
+        return false;
+    }
+
+    if (val) { *val = (scalar_t)scalar; }
+    return true;
 }
 
