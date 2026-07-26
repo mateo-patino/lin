@@ -164,6 +164,28 @@ tokens_status create_matrix_token(token_t *token, int nrow, int ncol) {
 }
 
 
+tokens_status create_parens_token(const char *str, token_t *dst) {
+    if (!str || *str == '\0' || strlen(str) > 1 || !dst) {
+        return TOKENS_INVALID_ARG;
+    }
+
+    char c = str[0];
+    switch (c) {
+        case '(':
+            dst->type = LPAREN;
+            break;
+        case ')':
+            dst->type = RPAREN;
+            break;
+        default:
+            set_error("Invalid parenthesis '%s'\n", c);
+            return TOKENS_INVALID_ARG;
+    }
+    dst->obj = NULL;
+    return TOKENS_OK;
+}
+
+
 token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_status *status) {
     if (!str || *str == '\0') {
         return NULL;
@@ -271,8 +293,11 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     if (!str || *str == '\0') {
         return TOKENS_INVALID_ARG;
     }
-    
-    
+        
+    /* Check parenthesis */
+    if (!strcmp(str, ")") || !strcmp(str, "(")) {
+        return create_parens_token(str, dst);
+    }
 
     return TOKENS_OK;
 }
