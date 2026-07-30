@@ -258,16 +258,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
     /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
-
-    /* Check if tok_str is "axb", otherwise do standard tokenization */
-    if (is_matrix_marker(tok_str, &nrow, &ncol)) {
-        if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
-            set_error("Invalid matrix starting at '%s'\n", tok_str);
-            if (status) { *status = st; }
-            goto FREE_UPON_ERROR_1;
-        } 
-    }
-    else if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) { 
+    if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) {
         set_error("Invalid argument '%s'\n", tok_str);
         if (status) { *status = st; }
         goto FREE_UPON_ERROR_1;
@@ -287,14 +278,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
         }
 
         /* Tokenize tok_str */
-        if (is_matrix_marker(tok_str, &nrow, &ncol)) {
-            if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
-                set_error("Invalid matrix starting at '%s'\n", tok_str);
-                if (status) { *status = st; }
-                goto FREE_UPON_ERROR_2;
-            } 
-        }
-        else if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
+        if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
             set_error("Invalid argument '%s'\n", tok_str);
             if (status) { *status = st; }
             goto FREE_UPON_ERROR_2;
@@ -339,12 +323,12 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     }
 
     /* in-out arguments */
+    tokens_status matrix_status;
+    unsigned int nrow = 0, ncol = 0;
     operator_type op_type;
     scalar_t val;
 
 
-    /* TODO: move the matrix tokenization logic inside here? */
-        
     /* Tokenize parenthesis */
     if (!strcmp(str, ")") || !strcmp(str, "(")) {
         return create_parens_token(str[0], dst);
@@ -356,6 +340,13 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     /* Tokenize operators */
     else if (is_operator(str, &op_type)) {
         return create_operator_token(op_type, dst);
+    } 
+    /* Tokenize matrices */
+    else if (is_matrix_marker(str, &nrow, &ncol)) {
+        if ((matrix_status = create_matrix_token(dst, nrow, ncol)) != TOKENS_OK) {
+            set_error("Invalid matrix starting at '%s'\n", str);
+            return matrix_status;
+        } 
     }
 
     set_error("Invalid argument '%s'\n", str);
