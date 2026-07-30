@@ -26,6 +26,19 @@ static bool print_error_message(void) {
 }
 
 
+/*
+* Pretty prints an array of 'tc' tokens. Used for debugging and development only.
+*/
+static void inspect_tokens(const token_t *tokens, size_t tc) {
+    fputc('[', stdout);
+    for (size_t i = 0; i < tc-1; i++) {
+         print_token(tokens + i);
+         fprintf(stdout, ", ");
+    }
+    print_token(tokens + tc - 1);
+    fprintf(stdout, "]\n");
+}
+
 
 int main(int argc, char **argv) {
 
@@ -49,6 +62,10 @@ int main(int argc, char **argv) {
         }
         goto FREE_TOKENS_AND_FAIL;
     }
+
+    /* DEBUG AND DEV */
+    inspect_tokens(tokens, token_count);
+    fully_free_tokens(tokens, token_count);
 
     return EXIT_SUCCESS;
 
