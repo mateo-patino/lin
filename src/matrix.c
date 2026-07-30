@@ -12,7 +12,7 @@ void free_matrix(matrix_t *mat) {
 }
 
 
-matrix_t *init_matrix(scalar_t *data, int nrow, int ncol) {
+matrix_t *init_matrix(scalar_t *data, unsigned int nrow, unsigned int ncol) {
     matrix_t *mat = malloc(sizeof(matrix_t));
     if (!mat) {
         return NULL;
