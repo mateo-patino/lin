@@ -46,15 +46,10 @@ typedef enum {
 } operator_type;
 
 typedef enum {
-    MATRIX_T,
-    SCALAR_T
+    MATRIX_OPERAND,
+    SCALAR_OPERAND
 } operand_type;
 
-typedef struct {
-   operator_type op;
-   operand_type in_type;
-   operand_type out_type;
-} operator_t;
 
 typedef enum {
     LEFT_ASSOC,
