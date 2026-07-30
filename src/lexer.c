@@ -175,6 +175,12 @@ tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned in
 }
 
 
+tokens_status create_operator_token(operator_type type, token_t *dst) {
+    /* TODO */
+    return TOKENS_OK;
+}
+
+
 tokens_status create_parens_token(const char c, token_t *dst) {
     if (!dst) {
         return TOKENS_INVALID_ARG;
@@ -226,7 +232,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
     /* Allocate token_t array */
     size_t size = TOKENS_ARR_SIZE;
-    token_t *tokens = malloc(size*sizeof(token_t));
+    token_t *tokens = malloc(size*sizeof(token_t)); /* Tokens live in the heap! */
     if (!tokens) {
         if (status) { *status = TOKENS_MEMORY_FAILURE; }
         free(m_str);
@@ -270,6 +276,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
             }
         }
 
+        /* Tokenize tok_str */
         if (is_matrix_marker(tok_str, &nrow, &ncol)) {
             if ((st = create_matrix_token(tokens, nrow, ncol)) != TOKENS_OK) {
                 set_error("Invalid matrix starting at '%s'\n", tok_str);
@@ -324,14 +331,19 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     /* in-out arguments */
     operator_type op_type;
     scalar_t val;
+
+
+    /* TODO: move the matrix tokenization logic inside here? */
         
     /* Tokenize parenthesis */
     if (!strcmp(str, ")") || !strcmp(str, "(")) {
         return create_parens_token(str[0], dst);
     }
+    /* Tokenize scalars */
     else if (is_scalar(str, &val)) {
         return create_scalar_token(val, dst); 
     }
+    /* Tokenize operators */
     else if (is_operator(str, &op_type)) {
         return create_operator_token(op_type, dst);
     }
@@ -345,8 +357,18 @@ bool is_operator(const char *str, operator_type *type) {
     if (!str || *str == '\0') {
         return false;
     } 
-    /* TODO */
-    return true;
+    const char *alias;
+    for (int i = 0; i < NUM_OP; i++) {
+        const char **aliases = operator_alias[i];
+        int j = 0;
+        while ((alias = aliases[j++])) {
+            if (!strcmp(str, alias)) {
+                if (type) { *type = (operator_type)i; }
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 

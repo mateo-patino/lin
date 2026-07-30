@@ -70,6 +70,8 @@ tokens_status create_token_from_str(const char *str, token_t *dst);
 /*
 * Returns true if 'str' is a valid operator label. If 'type' is not NULL, the operator type is
 * written there.
+*
+* The array of alias strings for each operator must be NULL terminated.
 */
 bool is_operator(const char *str, operator_type *type);
 
