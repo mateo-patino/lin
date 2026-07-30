@@ -28,6 +28,11 @@ tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned in
 
 
 /*
+* Tokenizes 'str' into an operator token.
+*/
+tokens_status create_operator_token(operator_type op_type, token_t *dst);
+
+/*
 * Tokenizes 'c' into a LPAREN or RPAREN token. The new token is written to 'dst'.
 * A tokens_status code is returned to indicate the success or failure of the tokenization.
 */

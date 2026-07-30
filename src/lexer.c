@@ -175,8 +175,18 @@ tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned in
 }
 
 
-tokens_status create_operator_token(operator_type type, token_t *dst) {
-    /* TODO */
+tokens_status create_operator_token(operator_type op_type, token_t *dst) {
+    if (!dst) { 
+        return TOKENS_INVALID_ARG;
+    }
+    operator_type *op = malloc(sizeof(operator_type));
+    if (!op) {
+        return TOKENS_MEMORY_FAILURE;
+    }
+    *op = op_type;
+    dst->type = OPERATOR;
+    dst->obj = op;
+    
     return TOKENS_OK;
 }
 
@@ -206,11 +216,11 @@ tokens_status create_scalar_token(scalar_t scalar, token_t *dst) {
     if (!dst) {
         return TOKENS_INVALID_ARG;
     }
-    dst->type = SCALAR;
     scalar_t *obj = malloc(sizeof(scalar_t));
     if (!obj) {
         return TOKENS_MEMORY_FAILURE;
     }
+    dst->type = SCALAR;
     *obj = scalar;
     dst->obj = obj;
 
