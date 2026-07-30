@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "token.h"
 #include "matrix.h"
 
@@ -81,5 +83,82 @@ void free_token_obj(token_t *tok) {
     }
     else {
         free(tok->obj);
+    }
+}
+
+
+void print_matrix(const matrix_t *mat) {
+    if (!mat || !mat->data || !(mat->ncol*mat->nrow)) {
+        return;
+    }
+    fprintf(stdout, "MAT(");
+    int digits = 2;
+    scalar_t *data = mat->data;
+    size_t nentry = mat->ncol * mat->nrow;
+
+    if (nentry <= 4) {
+        for (size_t i = 0; i < nentry-1; i++) {
+            fprintf(stdout, PRISCALAR ", ", digits, data[i]);
+        }
+        fprintf(stdout, PRISCALAR, digits, data[nentry-1]);
+    }
+    else {
+        /* Print a, b ... c, d */
+        fprintf(stdout, PRISCALAR ", ", digits, data[0]);
+        fprintf(stdout, PRISCALAR " ... ", digits, data[1]);
+        fprintf(stdout, PRISCALAR ", ", digits, data[nentry-2]);
+        fprintf(stdout, PRISCALAR, digits, data[nentry-1]);
+    }
+    fputc(')', stdout);
+}
+
+
+void print_operator_enum(operator_type op) {
+    switch (op) {
+        case MAT_ADD:
+            fprintf(stdout, "MAT_ADD");
+            break;
+        case MAT_SUB:
+            fprintf(stdout, "MAT_SUB");
+            break;
+        case MAT_MUL:
+            fprintf(stdout, "MAT_MUL");
+            break;
+        case SMUL:
+            fprintf(stdout, "SMUL");
+            break;
+        case DET:
+            fprintf(stdout, "DET");
+            break;
+        case RREF:
+            fprintf(stdout, "RREF");
+            break;
+        case INV:
+            fprintf(stdout, "INV");
+            break;
+        case NUM_OP:
+            break;
+    }
+}
+
+
+void print_token(const token_t *tok) {
+    if (!tok) {
+        return;
+    }
+    token_type tok_type = tok->type;
+
+    switch (tok_type) {
+        case OPERATOR:
+            print_operator_enum(*(operator_type *)tok->obj);
+            break;
+        case SCALAR:
+            if (tok->obj) { fprintf(stdout, PRISCALAR "\n", 2, *(scalar_t *)tok->obj); }
+            break; 
+        case MATRIX:
+            if (tok->obj) { print_matrix((matrix_t *)tok->obj); }
+            break;
+        default:
+            break;
     }
 }

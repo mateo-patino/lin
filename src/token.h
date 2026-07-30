@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "matrix.h"
+
 /*
 * This file defines the basic data types used by this program.
 *
@@ -88,5 +90,23 @@ void free_token_objs_by_count(token_t *tokens, size_t count);
 * Frees a token_t's obj member (but not the token itself).
 */
 void free_token_obj(token_t *tok);
+
+
+/*
+* Prints a matrix in format MAT(entries) if there are 4 or fewer entries.
+* Otherwise, it prints MAT(first two entries, last two entries).
+*/
+
+void print_matrix(const matrix_t *mat);
+
+/*
+* Prints the text name of an operator_type enum value.
+*/
+void print_operator_enum(operator_type op);
+
+/*
+* Pretty prints a token to stdout.
+*/
+void print_token(const token_t *tok);
 
 #endif
