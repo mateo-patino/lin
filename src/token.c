@@ -35,7 +35,7 @@ const assoc associativity[NUM_OP] = {
 };
 
 
-/* Operator aliases */
+/* Operator aliases. Note each array of aliases is NULL terminated. */
 static const char *mat_add_alias[] = { "add", "plus", "+", NULL };
 static const char *mat_sub_alias[] = { "sub", "minus", "-", NULL };
 static const char *mat_mul_alias[] = { "mul", "times", "*", NULL };
@@ -44,7 +44,7 @@ static const char *det_alias[] = { "det", "determinant", "detof", NULL };
 static const char *rref_alias[] = { "rref", "reduced", NULL };
 static const char *inv_alias[] = { "inv", "inverse", NULL };
 
-const char **operator_alias[] = {
+const char **operator_alias[NUM_OP] = {
     [MAT_ADD] = mat_add_alias,
     [MAT_SUB] = mat_sub_alias,
     [MAT_MUL] = mat_mul_alias,
@@ -54,6 +54,11 @@ const char **operator_alias[] = {
     [INV] = inv_alias,
 };
 
+
+void fully_free_tokens(token_t *tokens, size_t count) {
+    free_token_objs_by_count(tokens, count);
+    free(tokens);
+}
 
 
 void free_token_objs_by_count(token_t *tokens, size_t count) {
@@ -74,9 +79,7 @@ void free_token_obj(token_t *tok) {
     if (tok->type == MATRIX) {
         free_matrix((matrix_t *)tok->obj);
     }
-    else if (tok->type == SCALAR) {
+    else {
         free(tok->obj);
     }
-
-    /* NOTE: likely need to add more logic for operator_t */
 }

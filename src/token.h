@@ -72,6 +72,12 @@ extern const char **operator_alias[NUM_OP];
 
 
 /*
+* Calls free_token_objs_by_count and then frees 'tokens'.
+*/
+void fully_free_tokens(token_t *tokens, size_t count);
+
+
+/*
 * Frees 'count' token_t->obj pointers in a 'tokens' array.
 * The 'tokens' pointer is not freed, however.
 */
