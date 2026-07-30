@@ -51,6 +51,14 @@ typedef enum {
 } operand_type;
 
 
+/*
+* There is no operator struct because all properties of operators are saved
+* in static tables that are parametized by operator_type values. 
+*
+* Tokens of type OPERATOR have an 'obj' pointer to an operator_type value,
+* which can be used to query tables for information about the operator.
+*/
+
 typedef enum {
     LEFT_ASSOC,
     RIGHT_ASSOC
