@@ -25,7 +25,7 @@ scalar_t str_to_scalar_t(const char *str, matrix_status *status) {
     double val = strtod(str, &endptr);
 
     if (endptr == str || *endptr != '\0' || errno != 0) {
-        set_error("Invalid scalar '%s'\n", str);
+        set_error("Invalid scalar '%s'", str);
         goto RETURN_UPON_ERROR;
     }
     if (status) { *status = MATRIX_OK; }
@@ -58,14 +58,14 @@ static scalar_t *get_matrix_entries_from_str(unsigned int n, tokens_status *stat
         
         /* If strtok returns NULL, not enough entries exist */
         if (!str) {
-            set_error("Expected %u matrix entries, got %u\n", n, i);
+            set_error("Expected %u matrix entries, got %u", n, i);
             if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
 
         val = str_to_scalar_t(str, &mat_st);
         if (mat_st != MATRIX_OK) {
-            set_error("Invalid entry '%s'\n", str);
+            set_error("Invalid entry '%s'", str);
             if (status) { *status = TOKENS_INVALID_MATRIX; }
             goto RETURN_UPON_ERROR;
         }
@@ -94,7 +94,6 @@ static bool is_matrix_marker(const char *str, unsigned int *nrow, unsigned int *
     unsigned long a = strtoul(str, &endptr, 10);
     
     if (*endptr != 'x' || errno == ERANGE) {
-        set_error("Invalid dimensions '%s'\n", original);
         return false;
     }
     
@@ -106,18 +105,17 @@ static bool is_matrix_marker(const char *str, unsigned int *nrow, unsigned int *
     errno = 0;
     unsigned long b = strtoul(str, &endptr, 10);
     if (endptr == str || *endptr != '\0' || errno == ERANGE) {
-        set_error("Invalid dimensions '%s'\n", original);
         return false;
     }
 
     if (!a || !b) {
-        set_error("Dimensions cannot be zero '%s'\n", original);
+        set_error("Dimensions cannot be zero '%s'", original);
         return false;
     }
 
     /* Check for uint overflow. a*b must fit inside of an unsigned int. */
     if (a > UINT_MAX || b > UINT_MAX || a > UINT_MAX / b) {
-        set_error("Dimensions are too large '%s'\n", original);
+        set_error("Dimensions are too large '%s'", original);
         return false;
     }
 
@@ -159,7 +157,7 @@ tokens_status create_matrix_token(token_t *token, unsigned int nrow, unsigned in
     tokens_status status;
     scalar_t *data = get_matrix_entries_from_str(nrow*ncol, &status);
     if (!data || status != TOKENS_OK) {
-        set_error("Cannot get matrix entries.\n");
+        set_error("Cannot get matrix entries.");
         return status;
     }
 
@@ -204,7 +202,7 @@ tokens_status create_parens_token(const char c, token_t *dst) {
             dst->type = RPAREN;
             break;
         default:
-            set_error("Invalid parenthesis '%c'\n", c);
+            set_error("Invalid parenthesis '%c'", c);
             return TOKENS_INVALID_ARG;
     }
     dst->obj = NULL;
@@ -253,13 +251,10 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     char *tok_str;
     tokens_status st;
 
-    unsigned int nrow = 0;
-    unsigned int ncol = 0;
-
     /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
     if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) {
-        set_error("Invalid argument '%s'\n", tok_str);
+        set_error("Invalid argument '%s'", tok_str);
         if (status) { *status = st; }
         goto FREE_UPON_ERROR_1;
     }
@@ -279,7 +274,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
         /* Tokenize tok_str */
         if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
-            set_error("Invalid argument '%s'\n", tok_str);
+            set_error("Invalid argument '%s'", tok_str);
             if (status) { *status = st; }
             goto FREE_UPON_ERROR_2;
         }
@@ -323,7 +318,7 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     }
 
     /* in-out arguments */
-    tokens_status matrix_status;
+    tokens_status matrix_token_status;
     unsigned int nrow = 0, ncol = 0;
     operator_type op_type;
     scalar_t val;
@@ -343,13 +338,14 @@ tokens_status create_token_from_str(const char *str, token_t *dst) {
     } 
     /* Tokenize matrices */
     else if (is_matrix_marker(str, &nrow, &ncol)) {
-        if ((matrix_status = create_matrix_token(dst, nrow, ncol)) != TOKENS_OK) {
-            set_error("Invalid matrix starting at '%s'\n", str);
-            return matrix_status;
+        if ((matrix_token_status = create_matrix_token(dst, nrow, ncol)) != TOKENS_OK) {
+            set_error("Invalid matrix starting at '%s'", str);
+            return matrix_token_status;
         } 
+        return TOKENS_OK;
     }
 
-    set_error("Invalid argument '%s'\n", str);
+    set_error("Invalid argument '%s'", str);
     return TOKENS_INVALID_ARG;
 }
 
@@ -389,4 +385,3 @@ bool is_scalar(const char *str, scalar_t *val) {
     if (val) { *val = (scalar_t)scalar; }
     return true;
 }
-
