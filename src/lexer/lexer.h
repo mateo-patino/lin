@@ -1,8 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "token.h"
-#include "matrix.h"
+#include "types/token.h"
+#include "types/matrix.h"
 
 #include <stdlib.h>
 #include <stdbool.h>

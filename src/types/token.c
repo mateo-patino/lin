@@ -153,10 +153,19 @@ void print_token(const token_t *tok) {
             print_operator_enum(*(operator_type *)tok->obj);
             break;
         case SCALAR:
-            if (tok->obj) { fprintf(stdout, PRISCALAR "\n", 2, *(scalar_t *)tok->obj); }
+            if (tok->obj) { fprintf(stdout, PRISCALAR, 2, *(scalar_t *)tok->obj); }
             break; 
         case MATRIX:
             if (tok->obj) { print_matrix((matrix_t *)tok->obj); }
+            break;
+        case LPAREN:
+            fprintf(stdout, "LPAREN");
+            break;
+        case RPAREN:
+            fprintf(stdout, "RPAREN");
+            break;
+        case TOKENS_END:
+            fprintf(stdout, "TOKENS_END");
             break;
         default:
             break;

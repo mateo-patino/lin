@@ -1,5 +1,5 @@
 #include "lexer.h"
-#include "matrix.h"
+#include "types/matrix.h"
 #include "errorprinter.h"
 
 #include <stdlib.h>

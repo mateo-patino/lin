@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "token.h"
-#include "lexer.h"
+#include "types/token.h"
+#include "lexer/lexer.h"
 #include "errorprinter.h"
 
 /*
@@ -21,7 +21,7 @@ static bool print_error_message(void) {
     if (!has_error()) {
         return false;
     }
-    fprintf(stderr, "%s\n", get_error());
+    fprintf(stderr, "Error: %s\n", get_error());
     return true;
 }
 
@@ -44,7 +44,8 @@ int main(int argc, char **argv) {
 
     /* Input must be a single string */
     if (argc != 2) {
-        fprintf(stderr, "Usage: ./%s [expression]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [expression]\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
     /* Assume argv[1] is the sole input string */
