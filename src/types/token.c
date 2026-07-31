@@ -88,7 +88,7 @@ void free_token_obj(token_t *tok) {
 
 
 void print_matrix(const matrix_t *mat) {
-    if (!mat || !mat->data || !(mat->ncol*mat->nrow)) {
+    if (!mat || !mat->data || !(mat->ncol && mat->nrow)) {
         return;
     }
     fprintf(stdout, "MAT(");
