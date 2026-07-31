@@ -22,7 +22,7 @@ typedef struct {
 } test_case_t;
 
 /* For brace initializing a test_case_t */
-#define TEST(x) {x, #x}
+#define TEST(x) {#x, x}
 
 /* (Continuous) array length */
 #define ARRAY_LEN(x) (sizeof(x) / sizeof((a)[0]))
