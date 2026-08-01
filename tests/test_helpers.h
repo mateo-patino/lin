@@ -33,4 +33,24 @@ typedef struct {
 */
 void perr(const char *fmt, ...);
 
+
+/*
+* Prints test_case->name PASS\n to stdout.
+*/
+void print_success(const test_case_t *test_case);
+
+
+/*
+* Forks and calls `func`. 
+*
+* If `func` fails, 1 will be returned. If the child process  is terminated by a
+* POSIX signal, 2 is returned and the signal number is written to `signum`. 
+* If `func` succeeds, 0 is returned.
+* 
+* If a POSIX system call fails, -1 is returned (hence, use a signed int to store 
+* the result NOT uint).
+*/
+int run_in_sandbox(const test_case_t *test_case, int *signum);
+
+
 #endif
