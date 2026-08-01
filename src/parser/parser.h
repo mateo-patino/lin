@@ -13,7 +13,6 @@
 * AST node type. Nodes are simply wrappers around a token_t pointer which points
 * to the tokens array in memory.
 */
-
 typedef struct node_t{
     const token_t *token;
     struct node_t *left;
