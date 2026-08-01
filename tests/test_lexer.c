@@ -28,8 +28,35 @@ static bool test_operator_lexer_valid(void) {
     return true;
 }
 
+static bool test_scalar_lexer_valid(void) {
+    static const char *valid_scalars[] = {
+        "0", "42", "-42", "+7", "1.25", "-0.125",
+        ".5", "4.", ".0625", "3e2", "6.25e1", "-2.5E-1",
+        "1E-6", "2.5e+3", "-8E2", "9.75", "-17.5", "0.0001"
+    };
+    static const scalar_t expected_scalars[] = {
+        0.0, 42.0, -42.0, 7.0, 1.25, -0.125,
+        0.5, 4.0, 0.0625, 300.0, 62.5, -0.25,
+        0.000001, 2500.0, -800.0, 9.75, -17.5, 0.0001
+    };
+
+    for (size_t i = 0; i < ARRAY_LEN(valid_scalars); i++) {
+        token_t token;
+
+        ASSERT_TRUE(create_token_from_str(valid_scalars[i], &token) == TOKENS_OK);
+        ASSERT_TRUE(token.type == SCALAR);
+        ASSERT_TRUE(token.obj != NULL);
+        ASSERT_EQ_SCALAR(*(scalar_t *)token.obj, expected_scalars[i]);
+
+        free_token_obj(&token);
+    }
+
+    return true;
+}
+
 static const test_case_t lexer_tests[] = { 
-    TEST(test_operator_lexer_valid) 
+    TEST(test_operator_lexer_valid),
+    TEST(test_scalar_lexer_valid)
 };
 
 
