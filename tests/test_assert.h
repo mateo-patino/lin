@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 /* Assert `expr` is true */
+void assert_true_failed(const char *expr, const char *file, int line, const char *func);
 #define ASSERT_TRUE(x) \
     do { \
         if (!(x)) { \
