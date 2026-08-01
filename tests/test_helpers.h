@@ -25,7 +25,7 @@ typedef struct {
 #define TEST(x) {#x, x}
 
 /* (Continuous) array length */
-#define ARRAY_LEN(x) (sizeof(x) / sizeof((a)[0]))
+#define ARRAY_LEN(x) (sizeof(x) / sizeof((x)[0]))
 
 
 /* 
