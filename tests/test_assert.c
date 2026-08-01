@@ -7,3 +7,14 @@ void assert_true_failed(const char *expr, const char *file, int line, const char
     perr("   at %s:%i\n", file, line);
     perr("   in %s\n", func);
 }
+
+void assert_eq_scalar_failed(scalar_t actual, scalar_t expected,
+                             const char *actual_expr, const char *expected_expr,
+                             const char *file, int line, const char *func) {
+    perr(BOLD "%s " ANSI_RED "FAILED" ANSI_RESET "\n", func);
+    perr("   Assertion failed: %s == %s\n", actual_expr, expected_expr);
+    perr("   Actual: " PRISCALAR "\n", 6, actual);
+    perr("   Expected: " PRISCALAR "\n", 6, expected);
+    perr("   at %s:%i\n", file, line);
+    perr("   in %s\n", func);
+}

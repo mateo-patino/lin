@@ -3,12 +3,29 @@
 
 #include <stdbool.h>
 
+#include "types/matrix.h"
+
 /* Assert `expr` is true */
 void assert_true_failed(const char *expr, const char *file, int line, const char *func);
 #define ASSERT_TRUE(x) \
     do { \
         if (!(x)) { \
             assert_true_failed(#x, __FILE__, __LINE__, __func__); \
+            return false; \
+        } \
+    } while (0)
+
+/* Assert scalar values `actual` and `expected` are equal */
+void assert_eq_scalar_failed(scalar_t actual, scalar_t expected,
+                             const char *actual_expr, const char *expected_expr,
+                             const char *file, int line, const char *func);
+#define ASSERT_EQ_SCALAR(actual, expected) \
+    do { \
+        scalar_t actual_value = (actual); \
+        scalar_t expected_value = (expected); \
+        if (actual_value != expected_value) { \
+            assert_eq_scalar_failed(actual_value, expected_value, #actual, #expected, \
+                                    __FILE__, __LINE__, __func__); \
             return false; \
         } \
     } while (0)
