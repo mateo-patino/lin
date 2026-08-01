@@ -40,6 +40,7 @@ int main(void) {
     total_crash += crash_lexer;
     
     /* Overall summary */
+    fputc('\n', stdout);
     print_overall_summary(total_tests, total_pass, total_crash);
     
     return EXIT_SUCCESS;
