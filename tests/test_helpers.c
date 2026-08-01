@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
@@ -16,7 +17,79 @@ void perr(const char *fmt, ...) {
 }
 
 
-void print_success(test_case_t *test_case) {
+const char *signum_to_str(int signum) {
+    switch (signum) {
+        case -1:
+            return "";
+        case SIGHUP:
+            return "SIGHUP";
+        case SIGINT:
+            return "SIGINT";
+        case SIGQUIT:
+            return "SIGQUIT";
+        case SIGILL:
+            return "SIGILL";
+        case SIGTRAP:
+            return "SIGTRAP";
+        case SIGABRT:
+            return "SIGABRT";
+        case SIGBUS:
+            return "SIGBUS";
+        case SIGFPE:
+            return "SIGFPE";
+        case SIGKILL:
+            return "SIGKILL";
+        case SIGUSR1:
+            return "SIGUSR1";
+        case SIGSEGV:
+            return "SIGSEGV";
+        case SIGUSR2:
+            return "SIGUSR2";
+        case SIGPIPE:
+            return "SIGPIPE";
+        case SIGALRM:
+            return "SIGALRM";
+        case SIGTERM:
+            return "SIGTERM";
+        case SIGCHLD:
+            return "SIGCHLD";
+        case SIGCONT:
+            return "SIGCONT";
+        case SIGSTOP:
+            return "SIGSTOP";
+        case SIGTSTP:
+            return "SIGTSTP";
+        case SIGTTIN:
+            return "SIGTTIN";
+        case SIGTTOU:
+            return "SIGTTOU";
+        case SIGURG:
+            return "SIGURG";
+        case SIGXCPU:
+            return "SIGXCPU";
+        case SIGXFSZ:
+            return "SIGXFSZ";
+        case SIGVTALRM:
+            return "SIGVTALRM";
+        case SIGPROF:
+            return "SIGPROF";
+        case SIGWINCH:
+            return "SIGWINCH";
+        case SIGSYS:
+            return "SIGSYS";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+
+void print_crash(const test_case_t *test_case, int signum) {
+    fprintf(stderr, BOLD "%s" ANSI_RED " CRASHED (signal %i, %s)\n" ANSI_RESET,
+            test_case->test_name, signum, signum_to_str(signum));
+}
+
+
+void print_success(const test_case_t *test_case) {
     fprintf(stdout, BOLD "%s " ANSI_RESET ANSI_GREEN "PASS\n" ANSI_RESET, test_case->test_name);
 }
 
@@ -67,4 +140,3 @@ int run_in_sandbox(const test_case_t *test_case, int *signum) {
     /* We should never get here, but if we do, test must've failed regardless */
     return 1;
 }
-

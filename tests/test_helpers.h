@@ -35,6 +35,18 @@ void perr(const char *fmt, ...);
 
 
 /*
+* Returns a pointer to a string representing the common name associated
+* to a POSIX signal num `signum` (e.g. 11 -> SIGSEGV)
+*/
+const char *signum_to_str(int signum);
+
+/*
+* Prints test_case->name CRASHED (signal signum) to stderr
+*/
+void print_crash(const test_case_t *test_case, int signum);
+
+
+/*
 * Prints test_case->name PASS\n to stdout.
 */
 void print_success(const test_case_t *test_case);
