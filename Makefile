@@ -12,21 +12,30 @@ CFLAGS = -std=$(CSTD) -Wall -Wextra -Werror -pedantic-errors -g
 CPPFLAGS = -Isrc
 
 APP_TARGET = lin
+TEST_TARGET = lin_test
 COMPILE_DB = compile_commands.json
 
 SRC_DIR = src
+TEST_DIR = tests
 OBJ_DIR = build
 
 APP_SRCS := $(shell find $(SRC_DIR) -type f -name '*.c')
 APP_OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(APP_SRCS))
+APP_OBJS_MAINLESS := $(filter-out $(OBJ_DIR)/main.o,$(APP_OBJS))
+
+TEST_SRCS := $(wildcard $(TEST_DIR)/*.c) # Note tests/ doesn't a nested structure
+TEST_OBJS := $(TEST_SRCS:$(TEST_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 COMPILE.c = $(CC) $(CPPFLAGS) $(CFLAGS)
 LINK = $(CC)
 
 all: $(APP_TARGET) $(COMPILE_DB)
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
 
-.PHONY: all clean
+.PHONY: all clean test
 
+# APP BUILD
 $(APP_TARGET): $(APP_OBJS)
 	$(LINK) $(CFLAGS) -o $@ $^
 
@@ -34,6 +43,16 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(COMPILE.c) -MMD -MP -c $< -o $@
 
+# TEST BUILD
+$(TEST_TARGET): $(TEST_OBJS) $(APP_OBJS_MAINLESS)
+	$(LINK) $(CFLAGS) -o $@ $^
+
+$(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
+	mkdir -p $(OBJ_DIR)
+	$(COMPILE.c) -MMD -MP -c $< -o $@
+
+
+# Compile database
 $(COMPILE_DB):
 	# compile_db.py needs target .json file, curdir, compile command, list of source files
 	python3 compile_db.py \
