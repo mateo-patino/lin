@@ -55,7 +55,7 @@ typedef enum {
 
 /*
 * There is no operator struct because all properties of operators are saved
-* in static tables that are parametized by operator_type values. 
+* in static tables that are parametrized by operator_type values.
 *
 * Tokens of type OPERATOR have an 'obj' pointer to an operator_type value,
 * which can be used to query tables for information about the operator.
@@ -96,7 +96,6 @@ void free_token_obj(token_t *tok);
 * Prints a matrix in format MAT(entries) if there are 4 or fewer entries.
 * Otherwise, it prints MAT(first two entries, last two entries).
 */
-
 void print_matrix(const matrix_t *mat);
 
 /*
