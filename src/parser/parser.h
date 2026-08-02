@@ -26,6 +26,20 @@ typedef struct {
 } ast_t;
 
 
+/* 
+* A tuple used for storing an operator depth's, precedence, associativity, and 
+* index within the tokens array. This tuple is used for finding the last operation
+* to occur in an expression 
+*/
+typedef struct {
+    operator_type op_type;
+    long depth;
+    long prec;
+    long assoc;
+    long index;
+} tuple_t;
+
+
 /*
 * Error interface for AST building and creation.
 */
@@ -59,7 +73,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *stat
 * is returned so the caller can free the partially-built tree (unless the root
 * could not be initialized. This is the only case where NULL is returned).
 */
-node_t *create_ast_helper(const token_t *token, size_t sz, ast_status *status);
+node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *status);
 
 
 /*
