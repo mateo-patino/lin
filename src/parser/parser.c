@@ -105,7 +105,8 @@ UPDATE_LAST_SO_FAR:
 */
 static int find_last_op_index(const token_t *tokens, int low, int high) {
     
-    tuple_t last_so_far = {LONG_MAX};
+    /* Some starting values that no valid operator could have */
+    tuple_t last_so_far = {NUM_OP, LONG_MAX, LONG_MAX, -1, -1};
     tuple_t current_op;
     int current_depth = 0;
     token_type tok_type;
@@ -133,7 +134,7 @@ static int find_last_op_index(const token_t *tokens, int low, int high) {
         }
     }
 
-    return last_so_far->index;
+    return last_so_far.index;
 }
 
 
@@ -183,7 +184,11 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
     if (!tokens) {
         return NULL;
     }
-    int last_op_index = find_last_op_index(tokens, low, high)
+    int last_op_index = find_last_op_index(tokens, low, high);
+
+    
+
+
     return NULL;
 }
 
