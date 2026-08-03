@@ -1,9 +1,11 @@
 #include "parser.h"
 #include "types/token.h"
+#include "errorprinter.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <stdbool.h>
 
 
 /* Setting an error status and returning NULL is a commnon pattern */
@@ -102,6 +104,8 @@ UPDATE_LAST_SO_FAR:
 * Returns the index of the last operation that would occur according to the
 * precedence and associativity rules in types/token.h should one evaluate the
 * tokens expression in the range [low, high] exclusive.
+*
+* If no operator token is found in the [low, high], -1 is returned.
 */
 static int find_last_op_index(const token_t *tokens, int low, int high) {
     
@@ -138,6 +142,36 @@ static int find_last_op_index(const token_t *tokens, int low, int high) {
 }
 
 
+/* Returns true if `token` is a matrix, scalar, or another operand type. */
+static bool is_operand_type(const token_t *token) {
+    if (!token) {
+        return false;
+    }
+    return token->type == SCALAR || token->type == MATRIX;
+}
+
+
+/*
+* Returns the index inside of the range [low, high] of exactly one operand type.
+* If no operands exist or more than one does, -1 is returned.
+*/
+static int get_remaining_operand(const token_t *tokens, int low, int high) {
+    int index = -1;
+    for (int i = low; i <= high; i++) {
+        if (is_operand_type(tokens + i)) {
+            /* `index` must be -1 before setting it to a valid index value. *
+               If `index` has been previously set and we attempt to set it again,
+               more than one operand token must exist, so we return in failure. */
+            if (index != -1) {
+                return -1;
+            }
+            index = i;
+        }
+    }
+    return index;
+}
+
+
 void free_subtree(node_t *node) {
     if (!node) {
         return;
@@ -154,6 +188,19 @@ void fully_free_ast(ast_t *ast) {
     }
     free_subtree(ast->root);
     free(ast);
+}
+
+
+node_t *initialize_node(const token_t *token, node_t *left, node_t *right) {
+    node_t *node = malloc(sizeof(node_t));
+    if (!node) {
+        return NULL;
+    }
+    node->token = token;
+    node->left = left;
+    node->right = right;
+
+    return node;
 }
 
 
@@ -186,9 +233,21 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
     }
     int last_op_index = find_last_op_index(tokens, low, high);
 
+    /* No operator token found in [low, high]. Exactly ONE operand must exist */
+    if (last_op_index == -1) {
+        int remaining_operand_index;
+
+        /* -1 means not EXACTLY ONE operand was found. `tokens` is a malformed expression. */
+        if ((remaining_operand_index = get_remaining_operand(tokens, low, high)) == -1) {
+            set_error("Invalid expression.");
+            RETURN_NULL_AND_STATUS(status, AST_INVALID_EXPRESSION);
+        }
+
+        /* We have one operand, so recursion stops. Initialize node and return it. */
+        node_t *new_node = 
+    }
+
     
-
-
     return NULL;
 }
 
