@@ -2,6 +2,7 @@
 #include "types/token.h"
 #include "errorprinter.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -116,7 +117,7 @@ static int find_last_op_index(const token_t *tokens, int low, int high) {
     token_type tok_type;
     operator_type op;
 
-    for (int i = low; i < high; i++) {
+    for (int i = low; i <= high; i++) {
 
         tok_type = tokens[i].type;
 
@@ -234,7 +235,6 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *stat
         fully_free_ast(tree);
         return NULL;
     }
-
     return tree;
 }
 
