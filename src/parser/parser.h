@@ -41,7 +41,8 @@ typedef struct {
 
 
 /*
-* Error interface for AST building and creation.
+* Error interface for AST building and creation. parser.c defines an internal
+* variable to store these codes.
 */
 typedef enum {
     AST_OK,
@@ -74,7 +75,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *stat
 * is returned so the caller can free the partially-built tree (unless the root
 * could not be initialized. This is the only case where NULL is returned).
 */
-node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *status);
+node_t *create_ast_helper(const token_t *tokens, int low, int high);
 
 
 /*

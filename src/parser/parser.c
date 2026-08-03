@@ -2,32 +2,40 @@
 #include "types/token.h"
 #include "errorprinter.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <stdbool.h>
 
 
-/* Setting an error status and returning NULL is a commnon pattern */
-#define RETURN_NULL_AND_STATUS(status, val)  \
-    do { \
-        set_status(status, val); \
-        return NULL; \
-    } while (0)
+/* 
+* A private status variable and interface for reporting errors arising from
+* this module. The status is forwarded to any callers via create_ast_from_tokens 
+*/
+static ast_status parser_status = AST_OK;
+static bool has_error_status = false;
 
-
-static void set_status(ast_status *status, ast_status val) {
-    /* If *status != AST_OK (error already occurred), do not overwrite */
-    if (!status || *status != AST_OK) {
+static void set_status(ast_status val) {
+    /* If an error status has already been set, do not overwrite */
+    if (has_error_status) {
         return;
     }
-    *status = val;
+    parser_status = val;
+    has_error_status = true;
 }
 
-static ast_status get_status(ast_status *status) {
-    return status ? *status : AST_STATUS_DNE;
+
+static ast_status get_status(void) {
+    return parser_status;
 }
+
+
+/* Setting an error status and returning NULL is a commnon pattern */
+#define RETURN_NULL_AND_STATUS(val)  \
+    do { \
+        set_status(val); \
+        return NULL; \
+    } while (0)
 
 
 /*
@@ -216,30 +224,43 @@ node_t *initialize_node(const token_t *token, node_t *left, node_t *right) {
     return node;
 }
 
+/*
+* `status` is a variable provided by the caller, and internally, the parser module will
+* have its own (static) `parse_status` variable.
+* 
+* The create_ast_from_tokens function is the only point where the caller's status shall be 
+* updated.
+*/
 
 ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *status) {
     if (!tokens || !sz) {
-        RETURN_NULL_AND_STATUS(status, AST_INVALID_TOKENS);
+        RETURN_NULL_AND_STATUS(AST_INVALID_TOKENS);
     }
 
     /* Set global status to OK before starting */
-    set_status(status, AST_OK);
+    set_status(AST_OK);
     
     ast_t *tree;
     if (!(tree = malloc(sizeof(ast_t)))) {
-        RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+        RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
     }
 
-    node_t *root = create_ast_helper(tokens, 0, sz-1, status);
-    if (!root || get_status(status) != AST_OK) {
+    node_t *root = create_ast_helper(tokens, 0, sz-1);
+    if (!root || get_status() != AST_OK) {
+        /* Forward parser status to external caller */
+        if (status) { 
+            *status = get_status();
+        }
         fully_free_ast(tree);
         return NULL;
     }
+
+    if (status) { *status = get_status(); }
     return tree;
 }
 
 
-node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *status) {
+node_t *create_ast_helper(const token_t *tokens, int low, int high) {
     if (!tokens) {
         return NULL;
     }
@@ -257,14 +278,14 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
         /* -1 means not EXACTLY ONE operand was found. `tokens` is a malformed expression. */
         if ((remaining_operand_index = get_remaining_operand(tokens, low, high)) == -1) {
             set_error("Invalid algebraic expression.");
-            RETURN_NULL_AND_STATUS(status, AST_INVALID_EXPRESSION);
+            RETURN_NULL_AND_STATUS(AST_INVALID_EXPRESSION);
         }
 
         /* We have one operand, so recursion stops. Initialize node and return it. */
         new_node = initialize_node(tokens + remaining_operand_index, NULL, NULL);
         if (!new_node) {
             set_error("malloc() failed.");
-            RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+            RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
         }
         
         return new_node;
@@ -278,12 +299,12 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
         /* Convention: unary operators will have their RIGHT child set and their 
         * LEFT child will be NULL */
         left = NULL;
-        right = create_ast_helper(tokens, last_op_index + 1, high, status);
+        right = create_ast_helper(tokens, last_op_index + 1, high);
         goto RETURN_NEW_NODE;
     }
     
-    left = create_ast_helper(tokens, low, last_op_index - 1, status);
-    right = create_ast_helper(tokens, last_op_index + 1, high, status);
+    left = create_ast_helper(tokens, low, last_op_index - 1);
+    right = create_ast_helper(tokens, last_op_index + 1, high);
 
 RETURN_NEW_NODE:
     new_node = initialize_node(tokens + last_op_index, left, right);
@@ -294,7 +315,7 @@ RETURN_NEW_NODE:
         free_subtree(left);
         free_subtree(right);
 
-        RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+        RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
     }
  
     return new_node;
