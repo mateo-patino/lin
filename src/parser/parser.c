@@ -27,38 +27,6 @@ static ast_status get_status(ast_status *status) {
 }
 
 
-ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *status) {
-    if (!tokens || !sz) {
-        RETURN_NULL_AND_STATUS(status, AST_INVALID_TOKENS);
-    }
-
-    /* Set global status to OK before starting */
-    set_status(status, AST_OK);
-    
-    ast_t *tree;
-    if (!(tree = malloc(sizeof(ast_t)))) {
-        RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
-    }
-
-    node_t *root = create_ast_helper(tokens, 0, sz-1, status);
-    if (!root || get_status(status) != AST_OK) {
-        fully_free_ast(tree);
-        return NULL;
-    }
-
-    return tree;
-}
-
-
-node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *status) {
-    if (!tokens) {
-        return NULL;
-    }
-    int last_op_index = find_last_op_index(tokens, low, high)
-    return NULL;
-}
-
-
 /*
 * Helper to find_last_op_index function (see below).
 *
@@ -96,7 +64,32 @@ static void compare_operators(tuple_t *other, tuple_t *last_so_far) {
     else if (other->depth == last_so_far->depth) {
         /* If depths are equal, choose op with least precedence */
         if (other->prec < last_so_far->prec) {
-            /* TODO */
+            goto UPDATE_LAST_SO_FAR;
+        }
+        else if (other->prec == last_so_far->prec) {
+
+            /* 
+            * If precedences are equal, then choose the operator that would be
+            * evaluated last according to associativity and index. A key invariant: if two
+            * operators have the same precedence, they must have the same associativity
+            * (any correctly defined precedence table must satisfy this). Therefore,
+            * `other` and `last_so_far` must have the same associativity. If they're
+            * left-associative, pick the operator with the greatest `index` (furthest to
+            * the right); if they're right-associative, pick the operator furthest to the 
+            * left).
+            */
+
+            if (other->assoc == LEFT_ASSOC) { /* Could've checked last_so_far->assoc too */
+                if (other->index > last_so_far->index) {
+                    goto UPDATE_LAST_SO_FAR;
+                }
+            }
+            else if (other->assoc == RIGHT_ASSOC){
+                if (other->index < last_so_far->index) {
+                    goto UPDATE_LAST_SO_FAR;
+                }
+            }
+
         }
     }
 
@@ -160,5 +153,37 @@ void fully_free_ast(ast_t *ast) {
     }
     free_subtree(ast->root);
     free(ast);
+}
+
+
+ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *status) {
+    if (!tokens || !sz) {
+        RETURN_NULL_AND_STATUS(status, AST_INVALID_TOKENS);
+    }
+
+    /* Set global status to OK before starting */
+    set_status(status, AST_OK);
+    
+    ast_t *tree;
+    if (!(tree = malloc(sizeof(ast_t)))) {
+        RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+    }
+
+    node_t *root = create_ast_helper(tokens, 0, sz-1, status);
+    if (!root || get_status(status) != AST_OK) {
+        fully_free_ast(tree);
+        return NULL;
+    }
+
+    return tree;
+}
+
+
+node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *status) {
+    if (!tokens) {
+        return NULL;
+    }
+    int last_op_index = find_last_op_index(tokens, low, high)
+    return NULL;
 }
 
