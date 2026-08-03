@@ -231,6 +231,11 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
     if (!tokens) {
         return NULL;
     }
+
+    node_t *new_node;
+    node_t *left;
+    node_t *right;
+
     int last_op_index = find_last_op_index(tokens, low, high);
 
     /* No operator token found in [low, high]. Exactly ONE operand must exist */
@@ -239,15 +244,35 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
 
         /* -1 means not EXACTLY ONE operand was found. `tokens` is a malformed expression. */
         if ((remaining_operand_index = get_remaining_operand(tokens, low, high)) == -1) {
-            set_error("Invalid expression.");
+            set_error("Invalid algebraic expression.");
             RETURN_NULL_AND_STATUS(status, AST_INVALID_EXPRESSION);
         }
 
         /* We have one operand, so recursion stops. Initialize node and return it. */
-        node_t *new_node = 
+        new_node = initialize_node(tokens + remaining_operand_index, NULL, NULL);
+        if (!new_node) {
+            set_error("malloc() failed.");
+            RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+        }
+        
+        return new_node;
     }
 
-    
-    return NULL;
+    /* An operator token was found, so recurse on the left and right sub-expressions */
+    left = create_ast_helper(tokens, low, last_op_index - 1, status);
+    right = create_ast_helper(tokens, last_op_index + 1, high, status);
+
+    new_node = initialize_node(tokens + last_op_index, left, right);
+    if (!new_node) {
+        set_error("malloc() failed.");
+        
+        /* Left and right subtrees could have been allocated so free */
+        free_subtree(left);
+        free_subtree(right);
+
+        RETURN_NULL_AND_STATUS(status, AST_MEMORY_FAILURE);
+    }
+ 
+    return new_node;
 }
 

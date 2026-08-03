@@ -45,6 +45,7 @@ typedef struct {
 */
 typedef enum {
     AST_OK,
+    AST_INVALID_EXPRESSION,
     AST_MEMORY_FAILURE,
     AST_INVALID_TOKENS,
     AST_STATUS_DNE
@@ -87,6 +88,15 @@ void fully_free_ast(ast_t *ast);
 * at by `node->token` is NOT freed.
 */
 void free_subtree(node_t *node);
+
+
+/*
+* Initializes a node_t struct with parameters. Returns a pointer to a heap-allocated
+* node.
+*
+* If memory for the node cannot be malloc'd, NULL is returned. 
+*/
+node_t *initialize_node(const token_t *token, node_t *left, node_t *right);
 
 
 #endif
