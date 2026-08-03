@@ -64,29 +64,42 @@ int main(int argc, char **argv) {
         if (!print_error_message()) {
             fprintf(stderr, "Error: Invalid expression. %s\n", expr);
         }
-        goto FREE_TOKENS_AND_FAIL;
+        goto FREE_TOKENS_FAIL;
     }
     else if (!token_count) {
         fprintf(stderr, "Error: Missing expression.\n");
-        goto FREE_TOKENS_AND_FAIL;
+        goto FREE_TOKENS_FAIL;
     }
     /* Quite unlikely but technically possible */
     else if (token_count > INT_MAX) {
         fprintf(stderr, "Error: Expression too large. Only %i logical tokens are supported.\n", 
                 INT_MAX);
-        goto FREE_TOKENS_AND_FAIL;
+        goto FREE_TOKENS_FAIL;
     }
+    inspect_tokens(tokens, token_count);
 
     /* Parse the tokens to create an AST */
     ast_status ast_status = AST_OK;
     ast_t *ast = create_ast_from_tokens(tokens, token_count, &ast_status); 
-
+    if (ast_status != AST_OK) {
+        if (!print_error_message()) {
+            fprintf(stderr, "Error: Invalid expression. %s\n", expr);
+        }
+        goto FREE_AST_AND_TOKENS_FAIL;
+    }
 
     fully_free_tokens(tokens, token_count);
+    fully_free_ast(ast);
 
     return EXIT_SUCCESS;
 
-FREE_TOKENS_AND_FAIL:
+FREE_TOKENS_FAIL:
     fully_free_tokens(tokens, token_count);
+    return EXIT_FAILURE;
+
+
+FREE_AST_AND_TOKENS_FAIL:
+    fully_free_tokens(tokens, token_count);
+    fully_free_ast(ast);
     return EXIT_FAILURE;
 }
