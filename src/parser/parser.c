@@ -172,6 +172,18 @@ static int get_remaining_operand(const token_t *tokens, int low, int high) {
 }
 
 
+/*
+* Returns true of `token` is a unary operator token.
+*/
+static bool is_unary_operator(const token_t *token) {
+    if (!token || token->type != OPERATOR) {
+        return false;
+    }
+    operator_type op = *(operator_type *)token->obj;
+    return arity[op] == 1;
+}
+
+
 void free_subtree(node_t *node) {
     if (!node) {
         return;
@@ -236,7 +248,7 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
     node_t *left;
     node_t *right;
 
-    int last_op_index = find_last_op_index(tokens, low, high);
+    const int last_op_index = find_last_op_index(tokens, low, high);
 
     /* No operator token found in [low, high]. Exactly ONE operand must exist */
     if (last_op_index == -1) {
@@ -258,10 +270,22 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
         return new_node;
     }
 
-    /* An operator token was found, so recurse on the left and right sub-expressions */
+    /* 
+    * An operator token was found, so recurse on the right only for unary operators and on 
+    * both sides for binary operators
+    */
+    if (is_unary_operator(tokens + last_op_index)) {
+        /* Convention: unary operators will have their RIGHT child set and their 
+        * LEFT child will be NULL */
+        left = NULL;
+        right = create_ast_helper(tokens, last_op_index + 1, high, status);
+        goto RETURN_NEW_NODE;
+    }
+    
     left = create_ast_helper(tokens, low, last_op_index - 1, status);
     right = create_ast_helper(tokens, last_op_index + 1, high, status);
 
+RETURN_NEW_NODE:
     new_node = initialize_node(tokens + last_op_index, left, right);
     if (!new_node) {
         set_error("malloc() failed.");
@@ -275,4 +299,6 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high, ast_status *
  
     return new_node;
 }
+
+
 
