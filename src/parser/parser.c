@@ -21,7 +21,9 @@ static void set_status(ast_status val) {
         return;
     }
     parser_status = val;
-    has_error_status = true;
+    if (val != AST_OK) {
+        has_error_status = true;
+    }
 }
 
 
