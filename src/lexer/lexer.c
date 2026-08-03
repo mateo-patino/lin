@@ -2,6 +2,8 @@
 #include "types/matrix.h"
 #include "errorprinter.h"
 
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -242,6 +244,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     size_t size = TOKENS_ARR_SIZE;
     token_t *tokens = malloc(size*sizeof(token_t)); /* Tokens live in the heap! */
     if (!tokens) {
+        set_error("realloc() failed"); 
         if (status) { *status = TOKENS_MEMORY_FAILURE; }
         free(m_str);
         return NULL;
@@ -254,7 +257,9 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
     /* Consume first token  */
     tok_str = strtok(m_str, TOKEN_DELIM);
     if ((st = create_token_from_str(tok_str, tokens)) != TOKENS_OK) {
-        set_error("Invalid argument '%s'", tok_str);
+        if (tok_str) {
+            set_error("Invalid argument '%s'", tok_str);
+        }
         if (status) { *status = st; }
         goto FREE_UPON_ERROR_1;
     }
@@ -267,6 +272,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
         if (tc == size) {
             tokens = resize_tokens(tokens, &size);
             if (errno == ENOMEM) {
+                set_error("realloc() failed"); 
                 if (status) { *status = TOKENS_MEMORY_FAILURE; }
                 goto FREE_UPON_ERROR_2; 
             }
@@ -274,7 +280,9 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
         /* Tokenize tok_str */
         if ((st = create_token_from_str(tok_str, tokens + tc)) != TOKENS_OK) {
-            set_error("Invalid argument '%s'", tok_str);
+            if (tok_str) {
+                set_error("Invalid argument '%s'", tok_str);
+            }
             if (status) { *status = st; }
             goto FREE_UPON_ERROR_2;
         }
@@ -286,6 +294,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
         errno = 0;
         tokens = resize_tokens(tokens, &size);
         if (errno == ENOMEM) {
+            set_error("realloc() failed"); 
             if (status) { *status = TOKENS_MEMORY_FAILURE; }
             goto FREE_UPON_ERROR_2;
         }
