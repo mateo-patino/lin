@@ -46,7 +46,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 # TEST BUILD
 $(TEST_TARGET): $(TEST_OBJS) $(APP_OBJS_MAINLESS)
-	$(LINK) $(CFLAGS) -o $@ $^
+	$(LINK) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
