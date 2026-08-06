@@ -7,6 +7,10 @@
 #include <stdbool.h>
 
 
+/*
+* Test that all supported aliases are correctly tokenized.
+*/
+
 static bool test_operator_lexer_valid(void) {
     for (int i = 0; i < NUM_OP; i++) {
         const char **aliases = operator_alias[i];
@@ -27,6 +31,10 @@ static bool test_operator_lexer_valid(void) {
 
     return true;
 }
+
+/*
+* Test that various valid scalars are being correctly tokenized 
+*/
 
 static bool test_scalar_lexer_valid(void) {
     static const char *valid_scalars[] = {
@@ -53,6 +61,17 @@ static bool test_scalar_lexer_valid(void) {
 
     return true;
 }
+
+
+/*
+* Test that small valid matrices are being correctly tokenized
+*/
+static bool test_valid_matrix_lexer_easy(void) {
+    token_t token;
+
+}
+
+
 
 static const test_case_t lexer_tests[] = { 
     TEST(test_operator_lexer_valid),
