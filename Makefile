@@ -10,6 +10,7 @@ endif
 
 CFLAGS = -std=$(CSTD) -Wall -Wextra -Werror -pedantic-errors -g
 CPPFLAGS = -Isrc
+LDLIBS = -lm
 
 APP_TARGET = lin
 TEST_TARGET = lin_test
@@ -37,7 +38,7 @@ test: $(TEST_TARGET)
 
 # APP BUILD
 $(APP_TARGET): $(APP_OBJS)
-	$(LINK) $(CFLAGS) -o $@ $^
+	$(LINK) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(dir $@)
