@@ -3,6 +3,19 @@
 
 #include "test_helpers.h"
 
+
+/*
+* Struct for arranging a string expression and the expected dimensions and data
+* into one container. 
+*/
+typedef struct {
+    const char *str;
+    unsigned int nrow;
+    unsigned int ncol;
+    const scalar_t *expected_data;
+} matrix_test_case_t;
+
+
 /*
 * Runs all tests in the lexer suite .
 *

@@ -62,6 +62,31 @@ static bool test_scalar_lexer_valid(void) {
     return true;
 }
 
+static const scalar_t expect1[] = { 1.0 };
+static const scalar_t expect2[] = { 0.0 };
+static const scalar_t expect3[] = { 1.0, 2.0, 3.0, 4.0 };
+static const scalar_t expect4[] = { -1.0, -2.0, -3.0, -4.0 };
+static const scalar_t expect5[] = { 1.01, 1.002, 1.0003, 1.00004 };
+
+static const matrix_test_case_t easy_matrix_cases[] = {
+    { "1x1 1", 1, 1, expect1 },
+    { "1x1 0", 1, 1, expect2 },
+    { "2x2 1 2 3 4", 2, 2, expect3 },
+    { "2x2 -1 -2 -3 -4", 2, 2, expect4 },
+    { "2x2 1.01 1.002 1.0003 1.00004", 2, 2, expect5 }
+};
+
+
+/* Helper to the ASSER_EQ_MATDATA macro */
+static bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz) {
+    for (size_t i = 0; i < sz; i++) {
+        if (!is_close(*actual, *expected, 1e-12, 1e-7)) {
+            return false;
+        }
+    }
+    return true;
+} 
+
 
 /*
 * Test that small valid matrices are being correctly tokenized
@@ -69,11 +94,19 @@ static bool test_scalar_lexer_valid(void) {
 static bool test_valid_matrix_lexer_easy(void) {
     token_t token;
     matrix_t *mat;
+    const matrix_test_case_t *case_t;
+    
+    size_t test_count = ARRAY_LEN(easy_matrix_cases);
 
-    ASSERT_TRUE(create_token_from_str("1x1 1", &token) == TOKENS_OK);
-    ASSERT_TRUE(token.type == MATRIX);
-    mat = (matrix_t *)token.obj;
-    ASSERT_TRUE(mat->nrow == 1 && mat->ncol == 1);
+    for (size_t i = 0; i < test_count; i++) {
+        case_t = easy_matrix_cases + i;
+
+        ASSERT_TRUE(create_token_from_str(case_t->str, &token) == TOKENS_OK);
+        ASSERT_TRUE(token.type == MATRIX);
+        mat = (matrix_t *)token.obj;
+        ASSERT_TRUE(mat->nrow == case_t->nrow && mat->ncol == case_t->ncol);
+        ASSERT_EQ_MATDATA(mat->data, case_t->expected_data, case_t->nrow * case_t->ncol);
+    }
 
     return true;
 }
