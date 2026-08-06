@@ -68,14 +68,22 @@ static bool test_scalar_lexer_valid(void) {
 */
 static bool test_valid_matrix_lexer_easy(void) {
     token_t token;
+    matrix_t *mat;
 
+    ASSERT_TRUE(create_token_from_str("1x1 1", &token) == TOKENS_OK);
+    ASSERT_TRUE(token.type == MATRIX);
+    mat = (matrix_t *)token.obj;
+    ASSERT_TRUE(mat->nrow == 1 && mat->ncol == 1);
+
+    return true;
 }
 
 
 
 static const test_case_t lexer_tests[] = { 
     TEST(test_operator_lexer_valid),
-    TEST(test_scalar_lexer_valid)
+    TEST(test_scalar_lexer_valid),
+    TEST(test_valid_matrix_lexer_easy)
 };
 
 
