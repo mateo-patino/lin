@@ -64,8 +64,11 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 * returned. If the string cannot be tokenized, the corresponding error status code is returned and nothing
 * is written to 'dst'.
 *
-* This function tokenizes a string into an operator, parenthesis, or scalar. It does not tokenize matrices.
-* Matrices are tokenized by create_matrix_token.
+* Note that this function only tokenizes single lexemes (i.e. `str` must not have any whitespaces). Multi-lexeme
+* objects like matrices cannot be passed as a single string into this function. A matrix '2x2 1 2 3 4' is
+* tokenized by first calling strtok and retrieving '2x2'; this gets fed into create_token_from_str, which 
+* uses is_matrix_marker to recognize that '2x2' signals the beginning of a matrix and consumes the next 4 tokens
+* using strtok's global status. If `str` is '2x2 1 2 3 4', is_matrix_marker fails and the matrix is not read.
 *
 * The token_t 'obj' pointer points to a heap address and must be freed by the caller.
 */

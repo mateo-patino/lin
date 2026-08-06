@@ -94,15 +94,18 @@ static bool is_matrix_marker(const char *str, unsigned int *nrow, unsigned int *
     char *endptr;
     errno = 0;
     unsigned long a = strtoul(str, &endptr, 10);
-    
+
+    /* endptr must point to 'x' */
     if (*endptr != 'x' || errno == ERANGE) {
         return false;
     }
     
+    /* Move endptr one up. It must not be NUL if the string is valid */
     if (*endptr++ == '\0') {
         return false;
     }
 
+    /* Set str to the 'b' value in 'axb' */
     str = endptr;
     errno = 0;
     unsigned long b = strtoul(str, &endptr, 10);
