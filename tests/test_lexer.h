@@ -10,12 +10,14 @@
 */
 typedef struct {
     const char *str;
-    unsigned int nrow;
-    unsigned int ncol;
+    uint nrow;
+    uint ncol;
     const scalar_t *expected_data;
 } matrix_test_case_t;
 
 
+/* Helper to the ASSERT_EQ_MATDATA macro */
+bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz);
 
 /*
 * Runs all tests in the lexer suite .

@@ -5,6 +5,7 @@
 #include "lexer/lexer.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 
 
 /*
@@ -78,10 +79,19 @@ static const matrix_test_case_t easy_matrix_cases[] = {
 
 
 /*
-* Test that small valid matrices are being correctly tokenized
+* Test that small valid matrices are being correctly tokenized.
+*
+* We call create_tokens_from_string because matrices are multi-lexeme objects
+* and require a different logic flow that single-lexeme tokens like scalars or
+* operators. Single-lexeme objects can be fully tokenized by create_token_from_str
+* but multi-lexeme objects need to be fed into create_tokens_from_string which
+* performs additional logic with the strtok interface that create_token_from_str
+* does not.
 */
 static bool test_valid_matrix_lexer_easy(void) {
-    token_t token;
+    token_t *token;
+    size_t token_count;
+    tokens_status tok_status;
     matrix_t *mat;
     const matrix_test_case_t *case_t;
     
@@ -89,10 +99,16 @@ static bool test_valid_matrix_lexer_easy(void) {
 
     for (size_t i = 0; i < test_count; i++) {
         case_t = easy_matrix_cases + i;
+        token = create_tokens_from_string(case_t->str, &token_count, &tok_status);
 
-        ASSERT_TRUE(create_token_from_str(case_t->str, &token) == TOKENS_OK);
-        ASSERT_TRUE(token.type == MATRIX);
-        mat = (matrix_t *)token.obj;
+        ASSERT_TRUE(token != NULL);
+        ASSERT_TRUE(tok_status == TOKENS_OK);
+        ASSERT_TRUE(token_count == 1);
+
+        ASSERT_TRUE(token->type == MATRIX);
+        ASSERT_TRUE(token->obj != NULL);
+        mat = (matrix_t *)token->obj;
+
         ASSERT_TRUE(mat->nrow == case_t->nrow && mat->ncol == case_t->ncol);
         ASSERT_EQ_MATDATA(mat->data, case_t->expected_data, case_t->nrow * case_t->ncol);
     }
