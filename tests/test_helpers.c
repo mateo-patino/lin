@@ -93,7 +93,7 @@ void print_crash(const test_case_t *test_case, int signum) {
 
 
 void print_success(const test_case_t *test_case) {
-    fprintf(stdout, BOLD "%s " ANSI_RESET ANSI_GREEN "PASS\n" ANSI_RESET, test_case->test_name);
+    fprintf(stderr, BOLD "%s " ANSI_RESET ANSI_GREEN "PASS\n" ANSI_RESET, test_case->test_name);
 }
 
 
