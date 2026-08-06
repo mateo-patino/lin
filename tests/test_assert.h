@@ -2,6 +2,7 @@
 #define TEST_ASSERT_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "types/matrix.h"
 
@@ -26,6 +27,22 @@ void assert_eq_scalar_failed(scalar_t actual, scalar_t expected,
         if (actual_value != expected_value) { \
             assert_eq_scalar_failed(actual_value, expected_value, #actual, #expected, \
                                     __FILE__, __LINE__, __func__); \
+            return false; \
+        } \
+    } while (0)
+
+
+/* Assert the arrays `actual` and `expected` are identical. */
+static bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz);
+void assert_eq_matdata_failed(scalar_t *actual, scalar_t *expected, size_t sz, const char *file, 
+                            int line, const char *func);
+#define ASSERT_EQ_MATDATA(actual, expected, sz) \
+    do { \
+        scalar_t *_actual = actual; \
+        scalar_t *_expected = expected; \
+        size_t _sz = sz; \
+        if (!equal_matrix_data(_actual, _expected, _sz)) { \ 
+            assert_eq_matdata_failed(_actual, _expected, _sz, __FILE__, __LINE__, __func__); \
             return false; \
         } \
     } while (0)
