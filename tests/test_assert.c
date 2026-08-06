@@ -1,5 +1,6 @@
 #include "test_assert.h"
 #include "test_helpers.h"
+#include "types/matrix.h"
 
 void assert_true_failed(const char *expr, const char *file, int line, const char *func) {
     perr(BOLD "%s " ANSI_RED "FAILED" ANSI_RESET "\n", func);
@@ -18,3 +19,17 @@ void assert_eq_scalar_failed(scalar_t actual, scalar_t expected,
     perr("   at %s:%i\n", file, line);
     perr("   in %s\n", func);
 }
+
+
+/* Helper to the ASSER_EQ_MATDATA macro */
+static bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz) {
+    for (size_t i = 0; i < sz; i++) {
+        if (!is_close(*actual, *expected, 1e-12, 1e-7)) {
+            return false;
+        }
+    }
+    return true;
+} 
+
+
+
