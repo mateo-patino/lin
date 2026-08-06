@@ -68,13 +68,17 @@ static const scalar_t expect2[] = { 0.0 };
 static const scalar_t expect3[] = { 1.0, 2.0, 3.0, 4.0 };
 static const scalar_t expect4[] = { -1.0, -2.0, -3.0, -4.0 };
 static const scalar_t expect5[] = { 1.01, 1.002, 1.0003, 1.00004 };
+static const scalar_t expect6[] = { 100.0, 200.0 };
+static const scalar_t expect7[] = { 67.0, -67.0 };
 
 static const matrix_test_case_t easy_matrix_cases[] = {
     { "1x1 1", 1, 1, expect1 },
     { "1x1 0", 1, 1, expect2 },
     { "2x2 1 2 3 4", 2, 2, expect3 },
     { "2x2 -1 -2 -3 -4", 2, 2, expect4 },
-    { "2x2 1.01 1.002 1.0003 1.00004", 2, 2, expect5 }
+    { "2x2 1.01 1.002 1.0003 1.00004", 2, 2, expect5 },
+    { "2x1 100 200", 2, 1, expect6 },
+    { "1x2 67 -67", 1, 2, expect7 }
 };
 
 
@@ -111,7 +115,11 @@ static bool test_valid_matrix_lexer_easy(void) {
 
         ASSERT_TRUE(mat->nrow == case_t->nrow && mat->ncol == case_t->ncol);
         ASSERT_EQ_MATDATA(mat->data, case_t->expected_data, case_t->nrow * case_t->ncol);
+
+        fully_free_tokens(token, token_count);
     }
+
+
 
     return true;
 }
