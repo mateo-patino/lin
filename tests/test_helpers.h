@@ -1,6 +1,8 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include "types/matrix.h"
+
 /* THIS FILE CONTAINS VARIOUS HELPERS USED BY THE TEST SUITE */
 
 /* ANSI COLORS */
@@ -53,6 +55,12 @@ void print_success(const test_case_t *test_case);
 
 
 /*
+* Returns true if abs(`a` - `b`) < `tol` (i.e. if a and b are close).
+*/
+bool is_close(scalar_t a, scalar_t b, scalar_t abs_tol, scalar_t rel_tol);
+
+
+/*
 * Forks and calls `func`. 
 *
 * If `func` fails, 1 will be returned. If the child process  is terminated by a
@@ -63,6 +71,8 @@ void print_success(const test_case_t *test_case);
 * the result NOT uint).
 */
 int run_in_sandbox(const test_case_t *test_case, int *signum);
+
+
 
 
 #endif

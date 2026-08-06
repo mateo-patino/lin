@@ -1,12 +1,15 @@
 #include "test_helpers.h"
+#include "types/matrix.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#include <unistd.h> /* Requires POSIX */
+#include <sys/wait.h> /* Requires POSIX */
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
 
 
 void perr(const char *fmt, ...) {
@@ -60,7 +63,7 @@ const char *signum_to_str(int signum) {
         case SIGTSTP:
             return "SIGTSTP";
         case SIGTTIN:
-            return "SIGTTIN";
+return "SIGTTIN";
         case SIGTTOU:
             return "SIGTTOU";
         case SIGURG:
@@ -93,6 +96,15 @@ void print_success(const test_case_t *test_case) {
     fprintf(stdout, BOLD "%s " ANSI_RESET ANSI_GREEN "PASS\n" ANSI_RESET, test_case->test_name);
 }
 
+
+bool is_close(scalar_t a, scalar_t b, scalar_t abs_tol, scalar_t rel_tol) { 
+    scalar_t diff = fabs(a - b);
+    if (diff <= abs_tol) {
+        return true;
+    }
+    return diff <= rel_tol * fmax(a, b);
+
+}
 
 int run_in_sandbox(const test_case_t *test_case, int *signum) {
 
