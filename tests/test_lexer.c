@@ -77,17 +77,6 @@ static const matrix_test_case_t easy_matrix_cases[] = {
 };
 
 
-/* Helper to the ASSER_EQ_MATDATA macro */
-static bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz) {
-    for (size_t i = 0; i < sz; i++) {
-        if (!is_close(*actual, *expected, 1e-12, 1e-7)) {
-            return false;
-        }
-    }
-    return true;
-} 
-
-
 /*
 * Test that small valid matrices are being correctly tokenized
 */

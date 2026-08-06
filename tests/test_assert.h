@@ -35,22 +35,13 @@ void assert_eq_scalar_failed(scalar_t actual, scalar_t expected,
 
 /* Assert the arrays `actual` and `expected` are identical. */
 
-/* Helper to the ASSER_EQ_MATDATA macro */
-static bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz) {
-    for (size_t i = 0; i < sz; i++) {
-        if (!is_close(*actual, *expected, 1e-12, 1e-7)) {
-            return false;
-        }
-    }
-    return true;
-} 
-
 void assert_eq_matdata_failed(const scalar_t *actual, const scalar_t *expected, size_t sz, const char *file, 
                             int line, const char *func);
+bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz);
 #define ASSERT_EQ_MATDATA(actual, expected, sz) \
     do { \
-        scalar_t *_actual = actual; \
-        scalar_t *_expected = expected; \
+        const scalar_t *_actual = actual; \
+        const scalar_t *_expected = expected; \
         size_t _sz = sz; \
         if (!equal_matrix_data(_actual, _expected, _sz)) { \
             assert_eq_matdata_failed(_actual, _expected, _sz, __FILE__, __LINE__, __func__); \

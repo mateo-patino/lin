@@ -32,3 +32,13 @@ void assert_eq_matdata_failed(const scalar_t *actual, const scalar_t *expected, 
     perr("   in %s\n", func);
 }
 
+
+bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t sz) {
+    for (size_t i = 0; i < sz; i++) {
+        if (!is_close(*actual, *expected, 1e-12, 1e-7)) {
+            return false;
+        }
+    }
+    return true;
+} 
+
