@@ -103,8 +103,25 @@ bool is_close(scalar_t a, scalar_t b, scalar_t abs_tol, scalar_t rel_tol) {
         return true;
     }
     return diff <= rel_tol * fmax(a, b);
-
 }
+
+
+void print_matrix_data(FILE *stream, const scalar_t *data, size_t sz, bool add_newline) {
+    if (!stream || !data || !sz) {
+        return;
+    }
+    int digits = 2;
+    for (size_t i = 0; i < sz; i++) {
+        fprintf(stream, PRISCALAR, digits, data[i]);
+        if (i < sz-1) {
+            fputc(' ', stream);
+        }
+    }
+    if (add_newline) {
+        fputc('\n', stream);
+    }
+}
+
 
 int run_in_sandbox(const test_case_t *test_case, int *signum) {
 

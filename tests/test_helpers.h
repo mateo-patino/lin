@@ -3,6 +3,9 @@
 
 #include "types/matrix.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /* THIS FILE CONTAINS VARIOUS HELPERS USED BY THE TEST SUITE */
 
 /* ANSI COLORS */
@@ -58,6 +61,12 @@ void print_success(const test_case_t *test_case);
 * Returns true if abs(`a` - `b`) < `tol` (i.e. if a and b are close).
 */
 bool is_close(scalar_t a, scalar_t b, scalar_t abs_tol, scalar_t rel_tol);
+
+
+/*
+* Prints `sz` space-separated scalars starting at `data` to `stream`.
+*/
+void print_matrix_data(FILE* stream, const scalar_t *data, size_t sz, bool add_newline);
 
 
 /*
