@@ -5,10 +5,10 @@
 
 /* Table of operator arities */
 const char arity[NUM_OP] = {
-    [MAT_ADD] = 2,
-    [MAT_SUB] = 2,
-    [MAT_MUL] = 2,
-    [SMUL] = 2,
+    [ADD] = 2,
+    [SUB] = 2,
+    [MUL] = 2,
+    [DIV] = 2,
     [DET] = 1,
     [RREF] = 1,
     [INV] = 1
@@ -16,21 +16,21 @@ const char arity[NUM_OP] = {
 
 /* Table of precedences */
 const char precedence[NUM_OP] = {
-    [MAT_ADD] = 0,
-    [MAT_SUB] = 0,
-    [MAT_MUL] = 1,
-    [SMUL] = 1,
+    [ADD] = 0,
+    [SUB] = 0,
+    [MUL] = 1,
+    [DIV] = 1,
     [DET] = 2,
     [RREF] = 2,
     [INV] = 2
 };
 
-
+/* Table of associativities */
 const assoc associativity[NUM_OP] = {
-    [MAT_ADD] = LEFT_ASSOC,
-    [MAT_SUB] = LEFT_ASSOC,
-    [MAT_MUL] = LEFT_ASSOC,
-    [SMUL] = LEFT_ASSOC,
+    [ADD] = LEFT_ASSOC,
+    [SUB] = LEFT_ASSOC,
+    [MUL] = LEFT_ASSOC,
+    [DIV] = LEFT_ASSOC,
     [DET] = RIGHT_ASSOC,
     [RREF] = RIGHT_ASSOC,
     [INV] = RIGHT_ASSOC
@@ -38,19 +38,19 @@ const assoc associativity[NUM_OP] = {
 
 
 /* Operator aliases. Note each array of aliases is NULL terminated. */
-static const char *mat_add_alias[] = { "add", "plus", "+", NULL };
-static const char *mat_sub_alias[] = { "sub", "minus", "-", NULL };
-static const char *mat_mul_alias[] = { "mul", "times", "*", NULL };
-static const char *smul_alias[] = { "smul", "scale", "s*", NULL };
+static const char *add_alias[] = { "add", "plus", "+", NULL };
+static const char *sub_alias[] = { "sub", "minus", "-", NULL };
+static const char *mul_alias[] = { "mul", "times", "*", NULL };
+static const char *div_alias[] = { "div", "over", "/", NULL };
 static const char *det_alias[] = { "det", "determinant", "detof", NULL };
 static const char *rref_alias[] = { "rref", "reduced", NULL };
 static const char *inv_alias[] = { "inv", "inverse", NULL };
 
 const char **operator_alias[NUM_OP] = {
-    [MAT_ADD] = mat_add_alias,
-    [MAT_SUB] = mat_sub_alias,
-    [MAT_MUL] = mat_mul_alias,
-    [SMUL] = smul_alias,
+    [ADD] = add_alias,
+    [SUB] = sub_alias,
+    [MUL] = mul_alias,
+    [DIV] = div_alias,
     [DET] = det_alias,
     [RREF] = rref_alias,
     [INV] = inv_alias,
@@ -115,17 +115,17 @@ void print_matrix(const matrix_t *mat) {
 
 void print_operator_enum(operator_type op) {
     switch (op) {
-        case MAT_ADD:
-            fprintf(stdout, "MAT_ADD");
+        case ADD:
+            fprintf(stdout, "ADD");
             break;
-        case MAT_SUB:
-            fprintf(stdout, "MAT_SUB");
+        case SUB:
+            fprintf(stdout, "SUB");
             break;
-        case MAT_MUL:
-            fprintf(stdout, "MAT_MUL");
+        case MUL:
+            fprintf(stdout, "MUL");
             break;
-        case SMUL:
-            fprintf(stdout, "SMUL");
+        case DIV:
+            fprintf(stdout, "DIV");
             break;
         case DET:
             fprintf(stdout, "DET");

@@ -37,10 +37,10 @@ typedef struct {
 
 /* Supported operators */
 typedef enum {
-    MAT_ADD,
-    MAT_SUB,
-    MAT_MUL,
-    SMUL,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
     DET,
     RREF,
     INV,
