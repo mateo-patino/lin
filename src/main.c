@@ -79,14 +79,18 @@ int main(int argc, char **argv) {
     inspect_tokens(tokens, token_count);
 
     /* Parse the tokens to create an AST */
-    ast_status ast_status = AST_OK;
-    ast_t *ast = create_ast_from_tokens(tokens, token_count, &ast_status); 
-    if (ast_status != AST_OK) {
+    parse_status parse_status = PARSE_OK;
+    ast_t *ast = create_ast_from_tokens(tokens, token_count, &parse_status); 
+    if (parse_status != PARSE_OK) {
         if (!print_error_message()) {
             fprintf(stderr, "Error: Invalid expression. %s\n", expr);
         }
         goto FREE_AST_AND_TOKENS_FAIL;
     }
+
+    /* Evaluate the AST */
+    
+        
 
     fully_free_tokens(tokens, token_count);
     fully_free_ast(ast);
