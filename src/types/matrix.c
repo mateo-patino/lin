@@ -23,3 +23,11 @@ matrix_t *init_matrix(scalar_t *data, unsigned int nrow, unsigned int ncol) {
 
     return mat;
 }
+
+
+bool have_equal_dimensions(const matrix_t *a, const matrix_t *b) {
+    if (!a || !b) {
+        return false;
+    }
+    return a->nrow == b->nrow && a->ncol == b->ncol;
+}

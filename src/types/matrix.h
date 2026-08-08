@@ -1,6 +1,8 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <stdbool.h>
+
 /* Scalar type */
 typedef double scalar_t;
 #define PRISCALAR "%.*f"
@@ -29,5 +31,11 @@ void free_matrix(matrix_t *mat);
 * heap-allocated matrix_t and NULL upon failure.
 */
 matrix_t *init_matrix(scalar_t *data, unsigned int nrow, unsigned int ncol);
+
+
+/*
+* Returns true if `a` and `b` have the same dimensions
+*/
+bool have_equal_dimensions(const matrix_t *a, const matrix_t *b);
 
 #endif
