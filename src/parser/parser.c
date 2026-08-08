@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "ast.h"
 #include "types/token.h"
 #include "errorprinter.h"
 
