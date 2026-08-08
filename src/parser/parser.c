@@ -13,23 +13,23 @@
 * A private status variable and interface for reporting errors arising from
 * this module. The status is forwarded to any callers via create_ast_from_tokens 
 */
-static ast_status parser_status = AST_OK;
+static parse_status internal_parser_status = PARSE_OK;
 static bool has_error_status = false;
 
-static void set_status(ast_status val) {
+static void set_status(parse_status val) {
     /* If an error status has already been set, do not overwrite */
     if (has_error_status) {
         return;
     }
-    parser_status = val;
-    if (val != AST_OK) {
+    internal_parser_status = val;
+    if (val != PARSE_OK) {
         has_error_status = true;
     }
 }
 
 
-static ast_status get_status(void) {
-    return parser_status;
+static parse_status get_status(void) {
+    return internal_parser_status;
 }
 
 
@@ -204,21 +204,21 @@ static bool is_unary_operator(const token_t *token) {
 * updated.
 */
 
-ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *status) {
+ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *status) {
     if (!tokens || !sz) {
-        RETURN_NULL_AND_STATUS(AST_INVALID_TOKENS);
+        RETURN_NULL_AND_STATUS(PARSE_INVALID_TOKENS);
     }
 
     /* Set global status to OK before starting */
-    set_status(AST_OK);
+    set_status(PARSE_OK);
     
     ast_t *tree;
     if (!(tree = malloc(sizeof(ast_t)))) {
-        RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
+        RETURN_NULL_AND_STATUS(PARSE_MEMORY_FAILURE);
     }
 
     node_t *root = create_ast_helper(tokens, 0, sz-1);
-    if (!root || get_status() != AST_OK) {
+    if (!root || get_status() != PARSE_OK) {
         /* Forward parser status to external caller */
         if (status) { 
             *status = get_status();
@@ -250,14 +250,14 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high) {
         /* -1 means not EXACTLY ONE operand was found. `tokens` is a malformed expression. */
         if ((remaining_operand_index = get_remaining_operand(tokens, low, high)) == -1) {
             set_error("Invalid algebraic expression.");
-            RETURN_NULL_AND_STATUS(AST_INVALID_EXPRESSION);
+            RETURN_NULL_AND_STATUS(PARSE_INVALID_EXPRESSION);
         }
 
         /* We have one operand, so recursion stops. Initialize node and return it. */
         new_node = initialize_node(tokens + remaining_operand_index, NULL, NULL);
         if (!new_node) {
             set_error("malloc() failed.");
-            RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
+            RETURN_NULL_AND_STATUS(PARSE_MEMORY_FAILURE);
         }
         
         return new_node;
@@ -287,7 +287,7 @@ RETURN_NEW_NODE:
         free_subtree(left);
         free_subtree(right);
 
-        RETURN_NULL_AND_STATUS(AST_MEMORY_FAILURE);
+        RETURN_NULL_AND_STATUS(PARSE_MEMORY_FAILURE);
     }
  
     return new_node;

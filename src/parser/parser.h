@@ -29,12 +29,12 @@ typedef struct {
 * variable to store these codes.
 */
 typedef enum {
-    AST_OK,
-    AST_INVALID_EXPRESSION,
-    AST_MEMORY_FAILURE,
-    AST_INVALID_TOKENS,
-    AST_STATUS_DNE
-} ast_status;
+    PARSE_OK,
+    PARSE_INVALID_EXPRESSION,
+    PARSE_MEMORY_FAILURE,
+    PARSE_INVALID_TOKENS,
+    PARSE_STATUS_DNE
+} parse_status;
 
 
 /*
@@ -48,7 +48,7 @@ typedef enum {
 * returned and `st` is set to indicate the error. In this case no heap memory needs
 * to be freed by the caller; all partially allocated nodes are freed internally.
 */
-ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, ast_status *status);
+ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *status);
 
 
 /*
