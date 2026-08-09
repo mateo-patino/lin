@@ -29,16 +29,19 @@
 typedef enum {
 
     /* Operands are valid and can be fed into some operation */
-    SEMANTIC_OK
-        ,
+    SEMANTIC_OK,
+
     /* Operands are logically incompatible with an operation or with each other */
     SEMANTIC_INCOMPATIBLE_OPERANDS,
 
     /* Operation results in floating-point positive or minus infinity */
     SEMANTIC_FP_OVERFLOW,
 
-    /* Two matrices do not have the same dimensions and hence cannot be operated upon */
-    SEMANTIC_UNEQUAL_DIMENSIONS,
+    /* Two matrices do not have the same or coherent dimensions and hence cannot be operated upon */
+    SEMANTIC_INCOMPATIBLE_DIMENSIONS,
+
+    /* A matrix entry produced isinf(entry) ==  true */
+    SEMANTIC_INFINITE_ENTRY,
 
     /* A pointer to token or obj is NULL */
     SEMANTIC_NULL_ARGS

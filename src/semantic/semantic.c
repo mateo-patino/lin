@@ -43,13 +43,23 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
     else if (a->type == MATRIX && b->type == MATRIX) {
         const matrix_t *mat = (const matrix_t *)a->obj;
         const matrix_t *rix = (const matrix_t *)b->obj;
+
+        if (!mat || !rix) {
+            return SEMANTIC_NULL_ARGS;
+        }
+        else if (!have_equal_dimensions(mat, rix)) {
+            return SEMANTIC_INCOMPATIBLE_DIMENSIONS;
+        }
         /*
-        * Below we check that each entry in the matrices is not infinite. Note that entry-wise addition
-        * can result in overflow even if all entries are finite, but this overflow is detected inside 
-        * the algebra module during calculation.
-        */
-        return (mat && rix && have_equal_dimensions(mat, rix) && has_finite_entries(mat) 
-                && has_finite_entries(rix)) ? SEMANTIC_OK : SEMANTIC_UNEQUAL_DIMENSIONS;
+         * Below we check that each entry in the matrices is not infinite. Note that entry-wise addition
+         * can result in overflow even if all entries are finite, but this overflow is detected inside 
+         * the algebra module during calculation.
+         */
+        else if (!has_finite_entries(mat) || !has_finite_entries(rix)) {
+            return SEMANTIC_INFINITE_ENTRY;
+        }
+
+        return SEMANTIC_OK; 
     }
     
     return SEMANTIC_INCOMPATIBLE_OPERANDS;    
