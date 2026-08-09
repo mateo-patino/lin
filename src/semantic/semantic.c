@@ -88,10 +88,12 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
 
 
 semantic_status valid_sub_operands(const token_t *a, const token_t *b) {
-    /* Addition and subtraction have the same conditions to be valid operations. is_add_overflow and 
+    /* 
+    * Addition and subtraction have the same conditions to be valid operations. is_add_overflow and 
     * has_finite_entries use isinf, which checks for negative and positive infinity, so the entire 
-    * valid_add_operands logic can be reused here. */
-    return valid_add_operands(a, b) ;
+    * valid_add_operands logic can be reused here. 
+    */
+    return valid_add_operands(a, b);
 }
 
 
@@ -100,9 +102,50 @@ semantic_status valid_mul_operands(const token_t *first, const token_t *second) 
         return SEMANTIC_NULL_ARGS;
     }
 
-    if (first->type == SCALAR && second->type == SCALAR) {
-        return 
+    if (first->type == SCALAR && second->type == SCALAR) { 
+        const scalar_t *sca = (const scalar_t *)first->obj;
+        const scalar_t *lar = (const scalar_t *)second->obj;
+
+        if (!sca || !lar) {
+            return SEMANTIC_NULL_ARGS;
+        }
+        else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
+            return SEMANTIC_INFINITE_SCALAR;
+        }
+        else if (is_scalar_mul_overflow(*sca, *lar)) {
+            return SEMANTIC_FP_OVERFLOW;
+        }
+
+        return SEMANTIC_OK;
     }
+    else if (first->type == MATRIX && second->type == MATRIX) {
+        const matrix_t *mat = (const matrix_t *)first->obj;
+        const matrix_t *rix = (const matrix_t *)second->obj;
+
+        if (!mat || !rix) {
+            return SEMANTIC_NULL_ARGS;
+        }
+        /*
+        * Like in addition, below we ONLY check that entries are finite. Matrix multiplication
+        * can still produce overflow, but we let the algebra library detect that error so as 
+        * avoid any long matrix math in this semantics layer.
+        */
+        else if (!has_finite_entries(mat) || !has_finite_entries(rix)) {
+            return SEMANTIC_INFINITE_ENTRY;
+        }
+        /*
+        * NOTE: this function assumes the order of matrix multiplication is mat * rix.
+        * Hence, we check that the number of columns in mat equals the number of rows in 
+        * rix.
+        */
+        else if (mat->ncol != rix->nrow) {
+            return SEMANTIC_INCOMPATIBLE_DIMENSIONS;
+        }
+
+        return SEMANTIC_OK;
+    }
+
+    return SEMANTIC_INCOMPATIBLE_OPERANDS;
 }
 
 
