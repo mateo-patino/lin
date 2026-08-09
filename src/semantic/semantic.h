@@ -60,7 +60,14 @@ semantic_status is_semantically_valid_ast(const ast_t *ast);
 * Note that floating-point overflow is also defined to account for 
 * a large negative value.
 */
-bool is_add_overflow(scalar_t a, scalar_t b);
+bool is_scalar_add_overflow(scalar_t a, scalar_t b);
+
+
+/*
+* Returns true if all entries in matrix `a` are finite according to
+* !isinf().
+*/
+bool has_finite_entries(const matrix_t *a);
 
 /*
 * Returns SEMANTIC_OK if `a` and `b` are valid operands for addition.
