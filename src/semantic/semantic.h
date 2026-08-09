@@ -27,10 +27,20 @@
 
 /* Error codes */
 typedef enum {
-    SEMANTIC_OK,
+
+    /* Operands are valid and can be fed into some operation */
+    SEMANTIC_OK
+        ,
+    /* Operands are logically incompatible with an operation or with each other */
     SEMANTIC_INCOMPATIBLE_OPERANDS,
+
+    /* Operation results in floating-point positive or minus infinity */
     SEMANTIC_FP_OVERFLOW,
+
+    /* Two matrices do not have the same dimensions and hence cannot be operated upon */
     SEMANTIC_UNEQUAL_DIMENSIONS,
+
+    /* A pointer to token or obj is NULL */
     SEMANTIC_NULL_ARGS
 } semantic_status;
 
@@ -50,7 +60,7 @@ semantic_status is_semantically_valid_ast(const ast_t *ast);
 * Note that floating-point overflow is also defined to account for 
 * a large negative value.
 */
-bool add_overflow(scalar_t a, scalar_t b);
+bool is_add_overflow(scalar_t a, scalar_t b);
 
 /*
 * Returns SEMANTIC_OK if `a` and `b` are valid operands for addition.
@@ -71,6 +81,8 @@ semantic_status valid_sub_operands(const token_t *a, const token_t *b);
 
 /*
 * Returns SEMANTIC_OK if `a` and `b` are valid multiplication operands.
+*
+* Both scalars and matrices are supported for multiplication.
 */
 semantic_status valid_mul_operands(const token_t *a, const token_t *b);
 
