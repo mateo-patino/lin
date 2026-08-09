@@ -49,7 +49,17 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
         const scalar_t *sca = (const scalar_t *)a->obj;
         const scalar_t *lar = (const scalar_t *)b->obj;
 
-        return (sca && lar && is_scalar_add_overflow(*sca, *lar)) ? SEMANTIC_FP_OVERFLOW : SEMANTIC_OK; 
+        if (!sca || !lar) {
+            return SEMANTIC_NULL_ARGS;
+        }
+        else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
+            return SEMANTIC_INFINITE_SCALAR;
+        }
+        else if (is_scalar_add_overflow(*sca, *lar)) {
+            return SEMANTIC_FP_OVERFLOW;
+        }
+
+        return SEMANTIC_OK; 
     }
     else if (a->type == MATRIX && b->type == MATRIX) {
         const matrix_t *mat = (const matrix_t *)a->obj;
