@@ -15,6 +15,16 @@ bool is_scalar_add_overflow(scalar_t a, scalar_t b) {
 }
 
 
+bool is_scalar_mul_overflow(scalar_t a, scalar_t b) {
+    return isinf(a * b);
+}
+
+
+bool is_infinite_scalar(scalar_t a) {
+    return isinf(a);
+}
+
+
 bool has_finite_entries(const matrix_t *a) {
     if (!a) {
         return false;
@@ -38,6 +48,7 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
     if (a->type == SCALAR && b->type == SCALAR) {
         const scalar_t *sca = (const scalar_t *)a->obj;
         const scalar_t *lar = (const scalar_t *)b->obj;
+
         return (sca && lar && is_scalar_add_overflow(*sca, *lar)) ? SEMANTIC_FP_OVERFLOW : SEMANTIC_OK; 
     }
     else if (a->type == MATRIX && b->type == MATRIX) {
@@ -67,20 +78,20 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
 
 
 semantic_status valid_sub_operands(const token_t *a, const token_t *b) {
-    /* Addition and subtraction have the same conditions to be valid operations. is_add_overflow
-    * uses isinf, which checks for negative and positive infinity, so the entire valid_add_operands
-    * logic can be reused here. */
+    /* Addition and subtraction have the same conditions to be valid operations. is_add_overflow and 
+    * has_finite_entries use isinf, which checks for negative and positive infinity, so the entire 
+    * valid_add_operands logic can be reused here. */
     return valid_add_operands(a, b) ;
 }
 
 
-semantic_status valid_mul_operands(const token_t *a, const token_t *b) {
-    if (!a || !b) { 
+semantic_status valid_mul_operands(const token_t *first, const token_t *second) {
+    if (!first || !second) { 
         return SEMANTIC_NULL_ARGS;
     }
 
-    if (a->type == SCALAR && b->type == SCALAR) {
-         
+    if (first->type == SCALAR && second->type == SCALAR) {
+        return 
     }
 }
 

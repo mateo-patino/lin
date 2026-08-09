@@ -34,11 +34,15 @@ typedef enum {
     /* Operands are logically incompatible with an operation or with each other */
     SEMANTIC_INCOMPATIBLE_OPERANDS,
 
-    /* Operation results in floating-point positive or minus infinity */
+    /* Operation results in floating-point positive or minus infinity. This differs from 
+    * SEMANTIC_INFINITE_* in that an operation with VALID operands produced the overflow */
     SEMANTIC_FP_OVERFLOW,
 
     /* Two matrices do not have the same or coherent dimensions and hence cannot be operated upon */
     SEMANTIC_INCOMPATIBLE_DIMENSIONS,
+
+    /* A scalar produced isinf(scalar) == true */
+    SEMANTIC_INFINITE_SCALAR,
 
     /* A matrix entry produced isinf(entry) ==  true */
     SEMANTIC_INFINITE_ENTRY,
@@ -67,6 +71,18 @@ bool is_scalar_add_overflow(scalar_t a, scalar_t b);
 
 
 /*
+* Returns true if `a * b` results in floating-point overflow.
+*/
+bool is_scalar_mul_overflow(scalar_t a, scalar_t b);
+
+
+/*
+* Returns isinf(a) (if `a` is positive or negative infinity)
+*/
+bool is_infinite_scalar(scalar_t a);
+
+
+/*
 * Returns true if all entries in matrix `a` are finite according to
 * !isinf().
 */
@@ -90,9 +106,15 @@ semantic_status valid_sub_operands(const token_t *a, const token_t *b);
 
 
 /*
-* Returns SEMANTIC_OK if `a` and `b` are valid multiplication operands.
+* Returns SEMANTIC_OK if `first` and `second` are valid multiplication operands
+* in the order first * second. 
 *
-* Both scalars and matrices are supported for multiplication.
+* Recall matrix multiplication is not commutative, so if `first` and `second` are
+* matrices, this function assumes `first` is the left-side operand and `second` is
+* the right-side operand, and it returns true if matrix multiplication can be
+* performed in this order.
+*
+* Scalars are also supported in multiplication.
 */
 semantic_status valid_mul_operands(const token_t *a, const token_t *b);
 
