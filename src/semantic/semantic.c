@@ -20,6 +20,11 @@ bool is_scalar_mul_overflow(scalar_t a, scalar_t b) {
 }
 
 
+bool is_scalar_div_overflow(scalar_t a, scalar_t b) {
+    return isinf(a / b);
+}
+
+
 bool is_infinite_scalar(scalar_t a) {
     return isinf(a);
 }
@@ -153,6 +158,31 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
     if (!a || !b) {
         return SEMANTIC_NULL_ARGS;
     }
-    /* TODO: check for NaN */
-    return a->type == SCALAR && b->type == SCALAR ? SEMANTIC_OK : SEMANTIC_INCOMPATIBLE_OPERANDS;
+
+    if (a->type != SCALAR || b->type != SCALAR) {
+        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+    }
+
+    const scalar_t *sca = (const scalar_t *)a->obj;
+    const scalar_t *lar = (const scalar_t *)b->obj;
+
+    if (!sca || !lar) {
+        return SEMANTIC_NULL_ARGS;
+    }
+    else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
+        return SEMANTIC_INFINITE_SCALAR;  
+    }
+    /*
+     * NOTE: this function assumes that the order of divison is sca / lar.
+     */
+    else if (is_scalar_div_overflow(*sca, *lar)) {
+        return SEMANTIC_FP_OVERFLOW;
+    }
+
+    return SEMANTIC_OK;
 } 
+
+
+/*
+* TODO: semantic checkers for DET, RREF, and INV
+*/

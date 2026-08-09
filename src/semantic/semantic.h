@@ -75,6 +75,11 @@ bool is_scalar_add_overflow(scalar_t a, scalar_t b);
 */
 bool is_scalar_mul_overflow(scalar_t a, scalar_t b);
 
+/*
+* Returns true if `a / b` results in floating-point overflow.
+*/
+bool is_scalar_div_overflow(scalar_t a, scalar_t b);
+
 
 /*
 * Returns isinf(a) (if `a` is positive or negative infinity)
@@ -121,6 +126,8 @@ semantic_status valid_mul_operands(const token_t *a, const token_t *b);
 /*
 * Returns SEMANTIC_OK if `a` and `b` are valid operands for division.
 * Matrix divison is not a thing, so `a` and `b` must be scalars.
+*
+* The function assumes that the order of divison is a / b.
 */
 semantic_status valid_div_operands(const token_t *a, const token_t *b);
 
