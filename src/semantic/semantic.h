@@ -47,6 +47,9 @@ typedef enum {
     /* A matrix entry produced isinf(entry) ==  true */
     SEMANTIC_INFINITE_ENTRY,
 
+    /* Attempt to invert non-square matrix */
+    SEMANTIC_INV_OF_NONSQUARE,
+
     /* A pointer to token or obj is NULL */
     SEMANTIC_NULL_ARGS
 } semantic_status;
@@ -131,5 +134,14 @@ semantic_status valid_mul_operands(const token_t *a, const token_t *b);
 */
 semantic_status valid_div_operands(const token_t *a, const token_t *b);
 
+
+/*
+* Returns SEMANTIC_OK if `a` is a matrix with 1) square dimensions, 2) finite
+* entries
+*
+* Note: only square matrices are valid INV operands. Generalized or one-sided inverses
+* are NOT currently supported. Only ordinary square inverses are allowed.
+*/
+semantic_status valid_inv_operand(const token_t *a);
 
 #endif

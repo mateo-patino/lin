@@ -183,6 +183,40 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
 } 
 
 
+
+
 /*
 * TODO: semantic checkers for DET, RREF, and INV
 */
+semantic_status valid_inv_operand(const token_t *a) {
+    if (!a) {
+        return SEMANTIC_NULL_ARGS;
+    }
+
+    if (a->type != MATRIX) {
+        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+    }
+   
+    const matrix_t *mat = (const matrix_t *)a->obj;
+    if (!mat) {
+        return SEMANTIC_NULL_ARGS;
+    }
+
+    /*
+    * Only square matrices can be inverted. Generalized (one-sided) inverses that arise
+    * from inverting a non-square matrix are not currently supported.
+    */
+    if (mat->ncol != mat->nrow) {
+        return SEMANTIC_INV_OF_NONSQUARE;
+    }
+    else if (!has_finite_entries(mat)) {
+        return SEMANTIC_INFINITE_ENTRY;
+    }
+
+    /* It is tempting to check the determinant of the matrix, but this implies calling
+    * the algebra library, and this module shall only perform high-level checks and avoid
+    * any heavy math. If the matrix is not invertible, the algebra functions will detect it
+    * when their time comes */
+
+    return SEMANTIC_OK;
+}
