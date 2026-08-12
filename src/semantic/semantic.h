@@ -62,10 +62,23 @@ typedef enum {
 } semantic_status;
 
 
+/* Used to represent operand types and check inputs and output types
+* are mathematically consistent */
+typedef enum {
+    SEM_MATRIX,
+    SEM_SCALAR,
+    SEM_NULL
+} io_type;
+
+
 /*
 * Returns SEMANTIC_OK if `ast` is a semantically valid AST.
 *
-* TODO: define what "being semantically valid" implies.
+* This function traverses an AST and checks that every operator node
+* has semantically valid operand children. Every supported operator
+* has a valid_OPERATORNAME_operand(s) function defined in this 
+* module which is responsible for checking whether an operand or
+* operands are mathematically valid operands for some operator.
 */
 semantic_status is_semantically_valid_ast(const ast_t *ast);
 
@@ -79,6 +92,18 @@ semantic_status is_semantically_valid_ast(const ast_t *ast);
 * It returns true if the message was successfully set and false otherwise.
 */
 bool set_semantic_error(semantic_status status);
+
+
+/*
+* Returns true if `left` and `right` are valid operand types for the
+* operator 'op'.
+*
+* If 'op' is a unary operator, pass NULL into 'left' and the io_type value
+* into 'right'. This matches the convention set in the parser module during 
+* the AST building process: a unary operator node will have its left pointer
+* equal to NULL and its right pointer will point to its unique input.
+*/
+bool are_valid_input_types(operator_type op, io_type left, io_type right);
 
 
 /*
@@ -201,5 +226,6 @@ semantic_status valid_rref_operand(const token_t *a);
 * are NOT currently supported. Only ordinary square inverses are allowed.
 */
 semantic_status valid_inv_operand(const token_t *a);
+
 
 #endif

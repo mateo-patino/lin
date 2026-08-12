@@ -1,13 +1,82 @@
 #include "semantic.h"
+#include "types/token.h"
 #include "types/matrix.h"
 #include "errorprinter.h"
 
+#include <assert.h>
 #include <math.h>
 
 
+/*
+* An internal interface for setting a semantic status. Used during recursion by 
+* is_semantically_valid_ast
+*/
+static semantic_status internal_semantic_status = SEMANTIC_OK;
+static bool has_error_status = false; /* SEMANTIC_OK is the only NON-error status */
+
+static void set_status(semantic_status status) {
+    if (has_error_status) {
+        return;
+    }
+    internal_semantic_status = status;
+    if (status != SEMANTIC_OK) {
+        has_error_status = true;
+    }
+}
+
+
+/* This is the only function in this module (and its helper) that shall set 
+* errors to the global buffer */
 semantic_status is_semantically_valid_ast(const ast_t *ast) {
-    /* TODO */
+    if (!ast || !ast->root) {
+        return SEMANTIC_NULL_ARGS;
+    }
+    
+    set_status(SEMANTIC_OK); 
+
+    
+
     return SEMANTIC_OK;
+}
+
+
+static io_type is_valid_ast_helper(const node_t *node) {
+    if (!node) {
+        return SEM_NULL;
+    }
+
+    const token_t *token = node->token;
+    assert(token != NULL && token->obj != NULL);
+    if (token->type == SCALAR) {
+        return SEM_SCALAR;
+    }
+    else if (token->type == MATRIX) {
+        return SEM_MATRIX;
+    }
+
+    /* If node is not a scalar or a matrix, it must be an operator, so recurse */ 
+    assert(token->type == OPERATOR);
+    io_type left_type = is_valid_ast_helper(node->left);
+    io_type right_type = is_valid_ast_helper(node->right);
+
+    /* Check left and right types match the expected input types */
+    operator_type op = *(operator_type *)token->obj;
+    
+    if (!are_valid_input_types(op, left_type, right_type)) {
+        /* CONTINUE HERE */
+    }
+}
+
+
+bool are_valid_input_types(operator_type op, io_type left, io_type right) {
+    switch (op) {
+        case ADD:
+        case SUB:
+        case MUL:
+            return (left == SEM_SCALAR && right == SEM_SCALAR) ||
+                   (left == SEM_MATRIX && right == SEM_MATRIX);
+        /* CONTINUE HERE */
+    }
 }
 
 
@@ -32,7 +101,7 @@ bool set_semantic_error(semantic_status status) {
         case SEMANTIC_EXPECTED_MATRIX:
             return set_error("Expected a matrix operand.");
         case SEMANTIC_NULL_ARGS:
-            return set_error("Token struct contains NULL pointer.");
+            return set_error("Expected dereferenceable pointer, got NULL.");
         default:
             return false;
     }
