@@ -47,6 +47,9 @@ typedef enum {
     /* A matrix entry produced isinf(entry) ==  true */
     SEMANTIC_INFINITE_OR_NAN_ENTRY,
 
+    /* Attempt to divide by zero */
+    SEMANTIC_DIVISION_BY_ZERO,
+
     /* Got a non-square matrix when a square matrix was needed */
     SEMANTIC_NONSQUARE_MATRIX,
 
@@ -87,13 +90,27 @@ bool is_scalar_mul_overflow(scalar_t a, scalar_t b);
 
 /*
 * Returns true if `a / b` results in floating-point overflow.
+* This function uses isinf(), which checks for positive or negative
+* infinity but ignored NaNs.
+*
+* The alternative to this function is `is_division_by_zero` which uses
+* isfinite to check for NaN and infinity. However, using `is_division_by_zero`,
+* the caller doesn't know if overflow (infinity) or NaN occurred. The purpose
+* of is_scalar_div_overflow is to catch overflows (infinities) only, while
+* `is_division_by_zero` catches both overflows and NaNs because some systems
+* represent floating-point division-by-zero as either NaN or infinity.
 */
 bool is_scalar_div_overflow(scalar_t a, scalar_t b);
 
 
 /*
-* Returns true if `a / b` produces
+* Returns true if `a / b` produces a NaN or positive or negative infinity.
+*
+* This function is able to catch floating-point overflows (infinity) and 
+* NaNs because different systems represent floating-point division-by-zero
+* in either way.
 */
+bool is_division_by_zero(scalar_t a, scalar_t b);
 
 
 /*

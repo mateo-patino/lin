@@ -20,11 +20,16 @@ bool is_scalar_mul_overflow(scalar_t a, scalar_t b) {
 }
 
 
+/* Does not catch NaNs, only overflows (infinities) */
 bool is_scalar_div_overflow(scalar_t a, scalar_t b) {
-    if (!b) {
-        return false;
-    }
     return isinf(a / b);
+}
+
+
+/* Does catch NaNs and infinities, which are both ways different systems
+* represent division by zero */
+bool is_division_by_zero(scalar_t a, scalar_t b) {
+    return !isfinite(a / b);
 }
 
 
@@ -177,12 +182,18 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
     }
     /*
      * NOTE: this function assumes that the order of divison is sca / lar.
+     * Below we check that sca / lar does not produce positive or negative infinity.
      */
     else if (is_scalar_div_overflow(*sca, *lar)) {
         return SEMANTIC_FP_OVERFLOW;
     }
-    /* TOOD: hanlde division by zero! */
-    else if (is_division_by_zero_scalar())
+    /* 
+    * Below we check that sca / lar does not produce infinity or NaN, which are both
+    * ways in which floating-point division-by-zero is represented in different systems.
+    */
+    else if (is_division_by_zero(*sca, *lar)) {
+        return SEMANTIC_DIVISION_BY_ZERO;
+    }
 
     return SEMANTIC_OK;
 } 
