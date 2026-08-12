@@ -183,11 +183,32 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
 } 
 
 
+semantic_status valid_det_operand(const token_t *a) {
+    if (!a) {
+        return SEMANTIC_NULL_ARGS;
+    } 
+
+    if (a->type != MATRIX) {
+        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+    }
+
+    const matrix_t *mat = (const matrix_t *)a->obj;
+
+    if (!mat) {
+        return SEMANTIC_NULL_ARGS;
+    }
+    else if (!has_finite_entries(mat)) {
+        return SEMANTIC_INFINITE_ENTRY;
+    }
+    /* Determinants are only defined for square matrices */
+    else if (mat->ncol != mat->nrow) {
+        return SEMANTIC_INCOMPATIBLE_DIMENSIONS;
+    }
+
+    return SEMANTIC_OK;
+}
 
 
-/*
-* TODO: semantic checkers for DET, RREF, and INV
-*/
 semantic_status valid_inv_operand(const token_t *a) {
     if (!a) {
         return SEMANTIC_NULL_ARGS;
