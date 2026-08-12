@@ -1,5 +1,6 @@
 #include "semantic.h"
 #include "types/matrix.h"
+#include "errorprinter.h"
 
 #include <math.h>
 
@@ -7,6 +8,34 @@
 semantic_status is_semantically_valid_ast(const ast_t *ast) {
     /* TODO */
     return SEMANTIC_OK;
+}
+
+
+bool set_semantic_error(semantic_status status) {
+    switch (status) {
+        case SEMANTIC_OK:
+            return false;
+        case SEMANTIC_INCOMPATIBLE_OPERANDS:
+            return set_error("Operands are mathematically incompatible.");
+        case SEMANTIC_FP_OVERFLOW:
+            return set_error("Foating-point overflow.");
+        case SEMANTIC_INCOMPATIBLE_DIMENSIONS:
+            return set_error("Incompatible matrix dimensions.");
+        case SEMANTIC_INFINITE_OR_NAN_SCALAR:
+            return set_error("Infinite or undefined scalar.");
+        case SEMANTIC_INFINITE_OR_NAN_ENTRY:
+            return set_error("Infinite or undefined matrix entry.");
+        case SEMANTIC_DIVISION_BY_ZERO:
+            return set_error("Division by zero.");
+        case SEMANTIC_NONSQUARE_MATRIX:
+            return set_error("Expected an NxN (square) matrix, got non-square matrix.");
+        case SEMANTIC_EXPECTED_MATRIX:
+            return set_error("Expected a matrix operand.");
+        case SEMANTIC_NULL_ARGS:
+            return set_error("Token struct contains NULL pointer.");
+        default:
+            return false;
+    }
 }
 
 

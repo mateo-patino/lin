@@ -4,15 +4,16 @@
 /*
 * This module provides functions to perform semantic checks on
 * different linear algebra operations and full abstract syntax trees.
-* The functions mostly expect token_t structs.
+*
+* Every operator supported must have its own valid_OPERATORNAME_operands()
+* functions which takes two tokens and returns a semantic_status code. These
+* functions are used by `is_semantically_valid_ast` to check that operator and
+* operand AST nodes make semantic sense.
 *
 * Here "semantic" refers to mathematical conditions that must be met for 
 * an operation to be sensible. For example, checking that the matrix operand
-* for an INV (inverse) operation is square or that the operands for a ADD
+* for an INV (inverse) operation is square or that the operands for an ADD
 * operation have the same type and dimensions.
-*
-* A set of enum codes is provided to describe in detail what kind of semantic
-* error was found.
 *
 * In general, functions here do not use the global errorprinter module. Setting
 * error messages is left to the caller who should have access to inputs and the 
@@ -67,6 +68,17 @@ typedef enum {
 * TODO: define what "being semantically valid" implies.
 */
 semantic_status is_semantically_valid_ast(const ast_t *ast);
+
+
+/*
+* Writes an error message to the global error buffer describing a 
+* a semantic error. The rest of this module does not use the errorprinter 
+* module, so we must write any semantic errors to the buffer out there 
+* in the caller's scope via this function.
+*
+* It returns true if the message was successfully set and false otherwise.
+*/
+bool set_semantic_error(semantic_status status);
 
 
 /*
