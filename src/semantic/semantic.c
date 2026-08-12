@@ -189,7 +189,7 @@ semantic_status valid_det_operand(const token_t *a) {
     } 
 
     if (a->type != MATRIX) {
-        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+        return SEMANTIC_EXPECTED_MATRIX;
     }
 
     const matrix_t *mat = (const matrix_t *)a->obj;
@@ -215,7 +215,7 @@ semantic_status valid_rref_operand(const token_t *a) {
     }
 
     if (a->type != MATRIX) {
-        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+        return SEMANTIC_EXPECTED_MATRIX;
     }
 
     const matrix_t *mat = (const matrix_t *)a->obj;
@@ -234,7 +234,7 @@ semantic_status valid_inv_operand(const token_t *a) {
     }
 
     if (a->type != MATRIX) {
-        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+        return SEMANTIC_EXPECTED_MATRIX;
     }
    
     const matrix_t *mat = (const matrix_t *)a->obj;

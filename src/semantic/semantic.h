@@ -50,6 +50,9 @@ typedef enum {
     /* Attempt to invert non-square matrix */
     SEMANTIC_NONSQUARE_MATRIX,
 
+    /* An operation expected a matrix but got a different token or object */
+    SEMANTIC_EXPECTED_MATRIX,
+
     /* A pointer to token or obj is NULL */
     SEMANTIC_NULL_ARGS
 } semantic_status;
