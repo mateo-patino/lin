@@ -37,7 +37,7 @@ bool has_finite_entries(const matrix_t *a) {
 
     scalar_t *entry = a->data;
     for (unsigned int i = 0; i < a->nrow * a->ncol; i++) {
-        if (isinf(entry[i])) {
+        if (isfinite(entry[i])) {
             return false;
         }
     }
