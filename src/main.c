@@ -11,6 +11,7 @@
 #include "types/token.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
+#include "semantic/semantic.h"
 #include "errorprinter.h"
 
 
@@ -88,10 +89,15 @@ int main(int argc, char **argv) {
         goto FREE_AST_AND_TOKENS_FAIL;
     }
 
-    /* Evaluate the AST */
+    /* Peform semantic checks on the AST */
+    semantic_status sem_status = is_semantically_valid_ast(ast);
+    if (sem_status != SEMANTIC_OK) {
+        if (!set_semantic_error(sem_status) || !print_error_message()) {
+            fprintf(stderr, "Error: Mathematically invalid expression.\n");
+        }
+        goto FREE_AST_AND_TOKENS_FAIL;
+    }
     
-        
-
     fully_free_tokens(tokens, token_count);
     fully_free_ast(ast);
 
