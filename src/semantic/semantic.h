@@ -48,7 +48,7 @@ typedef enum {
     SEMANTIC_INFINITE_ENTRY,
 
     /* Attempt to invert non-square matrix */
-    SEMANTIC_INV_OF_NONSQUARE,
+    SEMANTIC_NONSQUARE_MATRIX,
 
     /* A pointer to token or obj is NULL */
     SEMANTIC_NULL_ARGS

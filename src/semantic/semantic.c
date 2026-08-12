@@ -202,7 +202,7 @@ semantic_status valid_det_operand(const token_t *a) {
     }
     /* Determinants are only defined for square matrices */
     else if (mat->ncol != mat->nrow) {
-        return SEMANTIC_INCOMPATIBLE_DIMENSIONS;
+        return SEMANTIC_NONSQUARE_MATRIX;
     }
 
     return SEMANTIC_OK;
@@ -228,7 +228,7 @@ semantic_status valid_inv_operand(const token_t *a) {
     * from inverting a non-square matrix are not currently supported.
     */
     if (mat->ncol != mat->nrow) {
-        return SEMANTIC_INV_OF_NONSQUARE;
+        return SEMANTIC_NONSQUARE_MATRIX;
     }
     else if (!has_finite_entries(mat)) {
         return SEMANTIC_INFINITE_ENTRY;
