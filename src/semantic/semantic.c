@@ -40,7 +40,7 @@ bool has_finite_entries(const matrix_t *a) {
 
     scalar_t *entry = a->data;
     for (unsigned int i = 0; i < a->nrow * a->ncol; i++) {
-        if (isfinite(entry[i])) {
+        if (!isfinite(entry[i])) {
             return false;
         }
     }
@@ -181,6 +181,8 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
     else if (is_scalar_div_overflow(*sca, *lar)) {
         return SEMANTIC_FP_OVERFLOW;
     }
+    /* TOOD: hanlde division by zero! */
+    else if (is_division_by_zero_scalar())
 
     return SEMANTIC_OK;
 } 

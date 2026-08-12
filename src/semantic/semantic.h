@@ -47,7 +47,7 @@ typedef enum {
     /* A matrix entry produced isinf(entry) ==  true */
     SEMANTIC_INFINITE_OR_NAN_ENTRY,
 
-    /* Attempt to invert non-square matrix */
+    /* Got a non-square matrix when a square matrix was needed */
     SEMANTIC_NONSQUARE_MATRIX,
 
     /* An operation expected a matrix but got a different token or object */
@@ -89,6 +89,11 @@ bool is_scalar_mul_overflow(scalar_t a, scalar_t b);
 * Returns true if `a / b` results in floating-point overflow.
 */
 bool is_scalar_div_overflow(scalar_t a, scalar_t b);
+
+
+/*
+* Returns true if `a / b` produces
+*/
 
 
 /*
