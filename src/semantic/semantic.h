@@ -140,6 +140,16 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b);
 */
 semantic_status valid_det_operand(const token_t *a);
 
+
+/*
+* Returns SEMANTIC_OK if it is possible to perform row-reduction on `a`.
+*
+* Row-reduction is a very common operation with relaxed requirements. As long as
+* all entries are finite (i.e. isfinite returns true, non-NaN and non-infinite),
+* SEMANTIC_OK is returned.
+*/
+semantic_status valid_rref_operand(const token_t *a);
+
 /*
 * Returns SEMANTIC_OK if `a` is a matrix with 1) square dimensions, 2) finite
 * entries

@@ -209,6 +209,25 @@ semantic_status valid_det_operand(const token_t *a) {
 }
 
 
+semantic_status valid_rref_operand(const token_t *a) {
+    if (!a) {
+        return SEMANTIC_NULL_ARGS;
+    }
+
+    if (a->type != MATRIX) {
+        return SEMANTIC_INCOMPATIBLE_OPERANDS;
+    }
+
+    const matrix_t *mat = (const matrix_t *)a->obj;
+
+    if (!mat) {
+        return SEMANTIC_NULL_ARGS;
+    }
+
+    return has_finite_entries(mat) ? SEMANTIC_OK : SEMANTIC_INFINITE_ENTRY;
+}
+
+
 semantic_status valid_inv_operand(const token_t *a) {
     if (!a) {
         return SEMANTIC_NULL_ARGS;
