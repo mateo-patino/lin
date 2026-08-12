@@ -21,6 +21,9 @@ bool is_scalar_mul_overflow(scalar_t a, scalar_t b) {
 
 
 bool is_scalar_div_overflow(scalar_t a, scalar_t b) {
+    if (!b) {
+        return false;
+    }
     return isinf(a / b);
 }
 
@@ -82,7 +85,7 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
          * the algebra module during calculation.
          */
         else if (!has_finite_entries(mat) || !has_finite_entries(rix)) {
-            return SEMANTIC_INFINITE_ENTRY;
+            return SEMANTIC_INFINITE_OR_NAN_ENTRY;
         }
 
         return SEMANTIC_OK; 
@@ -136,7 +139,7 @@ semantic_status valid_mul_operands(const token_t *first, const token_t *second) 
         * avoid any long matrix math in this semantics layer.
         */
         else if (!has_finite_entries(mat) || !has_finite_entries(rix)) {
-            return SEMANTIC_INFINITE_ENTRY;
+            return SEMANTIC_INFINITE_OR_NAN_ENTRY;
         }
         /*
         * NOTE: this function assumes the order of matrix multiplication is mat * rix.
@@ -198,7 +201,7 @@ semantic_status valid_det_operand(const token_t *a) {
         return SEMANTIC_NULL_ARGS;
     }
     else if (!has_finite_entries(mat)) {
-        return SEMANTIC_INFINITE_ENTRY;
+        return SEMANTIC_INFINITE_OR_NAN_ENTRY;
     }
     /* Determinants are only defined for square matrices */
     else if (mat->ncol != mat->nrow) {
@@ -224,7 +227,7 @@ semantic_status valid_rref_operand(const token_t *a) {
         return SEMANTIC_NULL_ARGS;
     }
 
-    return has_finite_entries(mat) ? SEMANTIC_OK : SEMANTIC_INFINITE_ENTRY;
+    return has_finite_entries(mat) ? SEMANTIC_OK : SEMANTIC_INFINITE_OR_NAN_ENTRY;
 }
 
 
@@ -250,7 +253,7 @@ semantic_status valid_inv_operand(const token_t *a) {
         return SEMANTIC_NONSQUARE_MATRIX;
     }
     else if (!has_finite_entries(mat)) {
-        return SEMANTIC_INFINITE_ENTRY;
+        return SEMANTIC_INFINITE_OR_NAN_ENTRY;
     }
 
     /* It is tempting to check the determinant of the matrix, but this implies calling

@@ -45,7 +45,7 @@ typedef enum {
     SEMANTIC_INFINITE_SCALAR,
 
     /* A matrix entry produced isinf(entry) ==  true */
-    SEMANTIC_INFINITE_ENTRY,
+    SEMANTIC_INFINITE_OR_NAN_ENTRY,
 
     /* Attempt to invert non-square matrix */
     SEMANTIC_NONSQUARE_MATRIX,
