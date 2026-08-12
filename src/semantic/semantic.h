@@ -42,7 +42,7 @@ typedef enum {
     SEMANTIC_INCOMPATIBLE_DIMENSIONS,
 
     /* A scalar produced isinf(scalar) == true */
-    SEMANTIC_INFINITE_SCALAR,
+    SEMANTIC_INFINITE_OR_NAN_SCALAR,
 
     /* A matrix entry produced isinf(entry) ==  true */
     SEMANTIC_INFINITE_OR_NAN_ENTRY,
@@ -72,6 +72,10 @@ semantic_status is_semantically_valid_ast(const ast_t *ast);
 *
 * Note that floating-point overflow is also defined to account for 
 * a large negative value.
+*
+* In this and the subsequent overflow functions, we use isinf to strictly
+* catch overflows and ignore NaNs. No NaNs should really ever be passed here
+* but note that this a limitation of these is_*_overflow functions.
 */
 bool is_scalar_add_overflow(scalar_t a, scalar_t b);
 
@@ -88,14 +92,16 @@ bool is_scalar_div_overflow(scalar_t a, scalar_t b);
 
 
 /*
-* Returns isinf(a) (if `a` is positive or negative infinity)
+* Returns isfinite(a) (if `a` is positive or negative infinity or NaN)
 */
-bool is_infinite_scalar(scalar_t a);
+bool is_infinite_or_nan_scalar(scalar_t a);
 
 
 /*
 * Returns true if all entries in matrix `a` are finite according to
-* !isinf().
+* !isfinite().
+*
+* Infinity and NaNs are rejected.
 */
 bool has_finite_entries(const matrix_t *a);
 

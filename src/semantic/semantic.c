@@ -28,8 +28,8 @@ bool is_scalar_div_overflow(scalar_t a, scalar_t b) {
 }
 
 
-bool is_infinite_scalar(scalar_t a) {
-    return isinf(a);
+bool is_infinite_or_nan_scalar(scalar_t a) {
+    return !isfinite(a);
 }
 
 
@@ -60,8 +60,8 @@ semantic_status valid_add_operands(const token_t *a, const token_t *b) {
         if (!sca || !lar) {
             return SEMANTIC_NULL_ARGS;
         }
-        else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
-            return SEMANTIC_INFINITE_SCALAR;
+        else if (is_infinite_or_nan_scalar(*sca) || is_infinite_or_nan_scalar(*lar)) {
+            return SEMANTIC_INFINITE_OR_NAN_SCALAR;
         }
         else if (is_scalar_add_overflow(*sca, *lar)) {
             return SEMANTIC_FP_OVERFLOW;
@@ -117,8 +117,8 @@ semantic_status valid_mul_operands(const token_t *first, const token_t *second) 
         if (!sca || !lar) {
             return SEMANTIC_NULL_ARGS;
         }
-        else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
-            return SEMANTIC_INFINITE_SCALAR;
+        else if (is_infinite_or_nan_scalar(*sca) || is_infinite_or_nan_scalar(*lar)) {
+            return SEMANTIC_INFINITE_OR_NAN_SCALAR;
         }
         else if (is_scalar_mul_overflow(*sca, *lar)) {
             return SEMANTIC_FP_OVERFLOW;
@@ -172,8 +172,8 @@ semantic_status valid_div_operands(const token_t *a, const token_t *b) {
     if (!sca || !lar) {
         return SEMANTIC_NULL_ARGS;
     }
-    else if (is_infinite_scalar(*sca) || is_infinite_scalar(*lar)) {
-        return SEMANTIC_INFINITE_SCALAR;  
+    else if (is_infinite_or_nan_scalar(*sca) || is_infinite_or_nan_scalar(*lar)) {
+        return SEMANTIC_INFINITE_OR_NAN_SCALAR;  
     }
     /*
      * NOTE: this function assumes that the order of divison is sca / lar.
