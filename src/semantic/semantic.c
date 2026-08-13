@@ -151,6 +151,124 @@ static io_type get_output_type(operator_type op, io_type left, io_type right) {
 }
 
 
+static bool is_operand_token(const token_t *tok) {
+    if (!tok || !tok->obj) {
+        return false;
+    }
+    return tok->type == SCALAR || tok->type == MATRIX;
+}
+
+
+/*
+* Returns true if `node` has operand children.
+*/
+static bool has_operand_children(const node_t *node) {
+    if (!node || !node->left || !node->right) {
+        return false;
+    }
+    const token_t *left_tok = node->left->token;
+    const token_t *right_tok = node->right->token;
+    if (!is_operand_token(left_tok) || !is_operand_token(right_tok)) {
+        return false;
+    }
+    return true;
+}
+
+
+/*
+* Calls a semantic checker for an operator `op` with operands 
+* `left` and `right` for binary operartos and with single operand
+* `right` for unary operators.
+*
+* It returns the semantic status code of the function called.
+*/
+static semantic_status run_semantic_operand_checks(operator_type op, const token_t *left, const token_t *right) {
+    switch (op) {
+        case ADD:
+            return valid_add_operands(left, right);
+        case SUB:
+            return valid_sub_operands(left, right);
+        case MUL:
+            return valid_mul_operands(left, right);
+        case DIV:
+            return valid_div_operands(left, right);
+        case DET:
+            return valid_det_operand(right);
+        case RREF:
+            return valid_rref_operand(right);
+        case INV:
+            return valid_inv_operand(right);
+        case NUM_OP:
+        default:
+            return SEMANTIC_NULL_ARGS;
+    }
+}
+
+
+static const char *token_to_str(const token_t *tok) {
+    if (!tok) {
+        return "";
+    }
+
+    /* NEEDSWORK: this function has access the token's data (e.g. scalar value, matrix entries, etc.)
+    * The messages it returns can be made richer and more informative. */
+    token_type tok_type = tok->type;
+    switch (tok_type) {
+        case SCALAR:
+            return "scalar";
+        case MATRIX:
+            return "matrix";
+        case OPERATOR:
+            operator_type *op = (operator_type *)tok->obj;
+            if (!op) {
+                return "operator ?";
+            }
+            return op_to_str(*op);
+        case LPAREN:
+            return "left parenthesis";
+        case RPAREN:
+            return "right parenthesis";
+        case TOKENS_END:
+        default:
+            return "unknown token";
+    }
+}
+
+
+static bool set_operand_error(semantic_status stat, operator_type op, const token_t *left, const token_t *right) {
+    const char *op_str = op_to_str(op);
+    const char *left_str = token_to_str(left);
+    const char *right_str = token_to_str(right);
+
+    switch (stat) {
+        case SEMANTIC_OK:
+            return false;
+        case SEMANTIC_INCOMPATIBLE_OPERANDS:
+            return set_error("'%s' and '%s' are mathematically incompatible with %s.", 
+                            left_str, right_str, op_str);
+        case SEMANTIC_FP_OVERFLOW:
+            return set_error("'%s' operation results in floating-point overflow.", op_str);
+        case SEMANTIC_INCOMPATIBLE_DIMENSIONS:
+            return set_error("'%s' and '%s' have incompatible matrix dimensions.", left_str, right_str);
+        case SEMANTIC_INFINITE_OR_NAN_SCALAR:
+            return set_error("Infinite or undefined scalar.");
+        case SEMANTIC_INFINITE_OR_NAN_ENTRY:
+            return set_error("Infinite or undefined matrix entry.");
+        case SEMANTIC_DIVISION_BY_ZERO:
+            return set_error("'%s' and '%s' produce division by zero.", left_str, right_str);
+        case SEMANTIC_NONSQUARE_MATRIX:
+            return set_error("'%s' operation expected a square matrix, got non-square matrix.",
+                    op_str);
+        case SEMANTIC_EXPECTED_MATRIX:
+            return set_error("'%s' expected a matrix operand.", op_str);
+        case SEMANTIC_NULL_ARGS:
+            return set_error("Expected dereferenceable pointer, got NULL.");
+        default:
+            return false;
+    }
+}
+
+
 static io_type is_valid_ast_helper(const node_t *node) {
     if (!node) {
         return SEM_NULL;
@@ -176,6 +294,22 @@ static io_type is_valid_ast_helper(const node_t *node) {
     if (!are_valid_input_types(op, left_type, right_type)) {
         set_type_error(op, left_type, right_type);
     }
+
+    /* 
+    * Check if `node` is at the second-to-deepest level (i.e. both of its children are 
+    * operands), and if so, do operand checks. We only do these checks at the bottom 
+    * of the tree because the operands provided by the user are immediately available 
+    * without any linear algebra computations.
+    */
+    if (has_operand_children(node)) {
+        const token_t *left_token = node->left->token;
+        const token_t *right_token = node->right->token;
+        semantic_status stat = run_semantic_operand_checks(op, left_token, right_token);
+        if (stat != SEMANTIC_OK) {
+            set_operand_error(stat, op, left_token, right_token);
+        }
+    }
+
 
     /* Regardless of a type error, we continue. The first type error written to the global
     * buffer is kept and not overwritten, so we just proceed until finishing the entire traversal */
@@ -218,30 +352,6 @@ bool are_valid_input_types(operator_type op, io_type left, io_type right) {
 
 
 bool set_semantic_error(semantic_status status) {
-    switch (status) {
-        case SEMANTIC_OK:
-            return false;
-        case SEMANTIC_INCOMPATIBLE_OPERANDS:
-            return set_error("Operands are mathematically incompatible.");
-        case SEMANTIC_FP_OVERFLOW:
-            return set_error("Foating-point overflow.");
-        case SEMANTIC_INCOMPATIBLE_DIMENSIONS:
-            return set_error("Incompatible matrix dimensions.");
-        case SEMANTIC_INFINITE_OR_NAN_SCALAR:
-            return set_error("Infinite or undefined scalar.");
-        case SEMANTIC_INFINITE_OR_NAN_ENTRY:
-            return set_error("Infinite or undefined matrix entry.");
-        case SEMANTIC_DIVISION_BY_ZERO:
-            return set_error("Division by zero.");
-        case SEMANTIC_NONSQUARE_MATRIX:
-            return set_error("Expected an NxN (square) matrix, got non-square matrix.");
-        case SEMANTIC_EXPECTED_MATRIX:
-            return set_error("Expected a matrix operand.");
-        case SEMANTIC_NULL_ARGS:
-            return set_error("Expected dereferenceable pointer, got NULL.");
-        default:
-            return false;
-    }
 }
 
 
