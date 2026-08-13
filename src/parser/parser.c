@@ -7,6 +7,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 
 /* 
@@ -228,6 +229,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     }
 
     if (status) { *status = get_status(); }
+    tree->root = root;
     return tree;
 }
 
