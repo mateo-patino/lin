@@ -26,7 +26,7 @@ static void set_status(semantic_status status) {
 
 
 /* This is the only function in this module (and its helper) that shall set 
-* errors to the global buffer */
+* errors to the global buffer. It will do so via set_type_error and set_operand_error. */
 semantic_status is_semantically_valid_ast(const ast_t *ast) {
     if (!ast || !ast->root) {
         return SEMANTIC_NULL_ARGS;
@@ -34,9 +34,120 @@ semantic_status is_semantically_valid_ast(const ast_t *ast) {
     
     set_status(SEMANTIC_OK); 
 
-    
+ 
 
     return SEMANTIC_OK;
+}
+
+
+/* This function is a helper to set_type_error */
+static const char *op_to_str(operator_type op) {
+    switch (op) {
+        case ADD:
+            return "addition";
+        case SUB:
+            return "subtraction";
+        case MUL:
+            return "multiplication";
+        case DIV:
+            return "division";
+        case DET:
+            return "determinant";
+        case RREF:
+            return "RREF";
+        case INV:
+            return "inversion";
+        case NUM_OP:
+        default:
+            return "?";
+    }
+}
+
+
+/*
+* Writes an error message to the global buffer concerning a type error.
+*/
+static void set_type_error(operator_type op, io_type left, io_type right) {
+    bool unary_type_error = false;
+    const char *op_str = op_to_str(op);
+    const char *left_str, *right_str;
+
+    /* Note we assume the convention that unary operators have a NULL left child and
+    * non-NULL right child */
+    if (left != SEM_NULL) {
+        left_str = left == SEM_SCALAR ? "scalar" : "matrix";
+    }
+    else {
+        unary_type_error = true;
+        assert(right != SEM_NULL);
+    }
+     
+    right_str = right == SEM_SCALAR ? "scalar" : "matrix";
+
+    if (unary_type_error) {
+        set_error("Operand of type '%s' is mathematically incompatible with '%s'.",
+                   right_str, op_str);
+    }
+    else {
+        set_error("Operands of type '%s' and '%s' are mathematically incompatible with %s.",
+                  left_str, right_str, op_str); 
+    }
+}
+
+
+/*
+* Helper to is_valid_ast_helper. It takes an operator type and two operand types
+* and returns the expected output type of the operator if it were to operate
+* on the two operand types.
+*
+* It returns SEM_SCALAR or SEM_MATRIX upon success and SEM_NULL upon failure.
+*/
+static io_type get_output_type(operator_type op, io_type left, io_type right) {
+    switch (op) {
+
+        case ADD:
+        case SUB:
+            if (left == SEM_SCALAR && right == SEM_SCALAR) {
+                return SEM_SCALAR;
+            }
+            else if (left == SEM_MATRIX && right == SEM_MATRIX) {
+                return SEM_MATRIX;
+            }
+            return SEM_NULL;
+
+        case MUL:
+            if (left == SEM_SCALAR && right == SEM_SCALAR) {
+                return SEM_SCALAR;
+            }
+            else if (left == SEM_MATRIX && right == SEM_MATRIX) {
+                return SEM_MATRIX;
+            }
+            else if ((left == SEM_SCALAR && right == SEM_MATRIX) || 
+                    (left == SEM_MATRIX && right == SEM_SCALAR)) {
+                return SEM_MATRIX;
+            }
+            return SEM_NULL;
+
+        case DIV:
+            if (left == SEM_SCALAR && right == SEM_SCALAR) {
+                return SEM_SCALAR;
+            }
+            return SEM_NULL;
+
+        case DET:
+        case RREF:
+        case INV:
+            /* Note we use the convention that unary operators have NULL left children
+            * and non-NULL right children. */
+            if (left == SEM_NULL && right == SEM_MATRIX) {
+                return SEM_MATRIX;
+            }
+            return SEM_NULL;
+
+        case NUM_OP:
+        default:
+            return SEM_NULL;
+    }
 }
 
 
@@ -59,23 +170,49 @@ static io_type is_valid_ast_helper(const node_t *node) {
     io_type left_type = is_valid_ast_helper(node->left);
     io_type right_type = is_valid_ast_helper(node->right);
 
-    /* Check left and right types match the expected input types */
+    /* Check left and right types match the expected input types. Write to
+    * global error buffer if not. */
     operator_type op = *(operator_type *)token->obj;
-    
     if (!are_valid_input_types(op, left_type, right_type)) {
-        /* CONTINUE HERE */
+        set_type_error(op, left_type, right_type);
     }
+
+    /* Regardless of a type error, we continue. The first type error written to the global
+    * buffer is kept and not overwritten, so we just proceed until finishing the entire traversal */
+    return get_output_type(op, left_type, right_type); 
 }
+
+
 
 
 bool are_valid_input_types(operator_type op, io_type left, io_type right) {
     switch (op) {
+
+        /* Add, subtract, and multiply can be done with scalars and matrices */
         case ADD:
         case SUB:
-        case MUL:
             return (left == SEM_SCALAR && right == SEM_SCALAR) ||
                    (left == SEM_MATRIX && right == SEM_MATRIX);
-        /* CONTINUE HERE */
+        case MUL:
+            return (left == right && left == SEM_SCALAR) ||
+                   (left == right && left == SEM_MATRIX) ||
+                   ((left == SEM_SCALAR && right == SEM_MATRIX) ||
+                    (left == SEM_MATRIX && right == SEM_SCALAR));
+
+        /* Division can only be done with scalars */
+        case DIV:
+            return left == SEM_SCALAR && right == SEM_SCALAR;
+
+        /* Determinants, rref, and inverses can only be done with matrices */
+        case DET:
+        case RREF:
+        case INV:
+            return left == SEM_NULL && right == SEM_MATRIX;
+
+        /* These shouldn't happen */
+        case NUM_OP:
+        default:
+            return false;
     }
 }
 
@@ -207,6 +344,11 @@ semantic_status valid_sub_operands(const token_t *a, const token_t *b) {
     return valid_add_operands(a, b);
 }
 
+
+/*
+* FIX: we should support a scalar times a matrix. Currently only scalar-scalar and matrix-matrix 
+* is allowed.
+*/
 
 semantic_status valid_mul_operands(const token_t *first, const token_t *second) {
     if (!first || !second) { 
