@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 
 /*
@@ -24,19 +25,8 @@ static void set_status(semantic_status status) {
     }
 }
 
-
-/* This is the only function in this module (and its helper) that shall set 
-* errors to the global buffer. It will do so via set_type_error and set_operand_error. */
-semantic_status is_semantically_valid_ast(const ast_t *ast) {
-    if (!ast || !ast->root) {
-        return SEMANTIC_NULL_ARGS;
-    }
-    
-    set_status(SEMANTIC_OK); 
-
- 
-
-    return SEMANTIC_OK;
+static semantic_status get_status(void) {
+    return internal_semantic_status;
 }
 
 
@@ -89,7 +79,7 @@ static void set_type_error(operator_type op, io_type left, io_type right) {
                    right_str, op_str);
     }
     else {
-        set_error("Operands of type '%s' and '%s' are mathematically incompatible with %s.",
+        set_error("Operands of type '%s' and '%s' are mathematically incompatible with '%s'.",
                   left_str, right_str, op_str); 
     }
 }
@@ -211,7 +201,7 @@ static const char *token_to_str(const token_t *tok) {
     }
 
     /* NEEDSWORK: this function has access the token's data (e.g. scalar value, matrix entries, etc.)
-    * The messages it returns can be made richer and more informative. */
+    * The messages it returns to set_operand_error can be made richer and more informative. */
     token_type tok_type = tok->type;
     switch (tok_type) {
         case SCALAR:
@@ -240,6 +230,13 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
     const char *left_str = token_to_str(left);
     const char *right_str = token_to_str(right);
 
+    /*
+    * Only semantic error codes that are triggered by exactly two operands shall have an error
+    * message that prints both operands (e.g. SEMANITC_INCOMPATIBLE_DIMENSIONS). Some errors may be
+    * triggered by one or two operands (e.g. SEMANTIC_INFINITE_OR_NAN_SCALAR, which is generally raised
+    * when !is_infinite_or_nan(a) || !is_infinite_or_nan(b) evaluates to true).
+    *
+    */
     switch (stat) {
         case SEMANTIC_OK:
             return false;
@@ -260,7 +257,7 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
             return set_error("'%s' operation expected a square matrix, got non-square matrix.",
                     op_str);
         case SEMANTIC_EXPECTED_MATRIX:
-            return set_error("'%s' expected a matrix operand.", op_str);
+            return set_error("'%s' operation expected a matrix.", op_str);
         case SEMANTIC_NULL_ARGS:
             return set_error("Expected dereferenceable pointer, got NULL.");
         default:
@@ -269,6 +266,17 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
 }
 
 
+/*
+* This function recursively traverses an AST rooted at `node` and perform two kinds
+* of semantic checks on every parent-child-child node triplet: 
+*
+* 1) do the children nodes have mathematically valid types? For example, if an 
+* operator is ADD (add), its children must be either both scalars or both matrices. 
+*
+* 2) For the deepest operator nodes (the nodes that are parents to the user-provided operands), 
+* are the user-provided operands mathematically valid? In particular, do they have the right
+* types, matrix dimensions, are all entries or scalars finite, etc.
+*/
 static io_type is_valid_ast_helper(const node_t *node) {
     if (!node) {
         return SEM_NULL;
@@ -293,6 +301,7 @@ static io_type is_valid_ast_helper(const node_t *node) {
     operator_type op = *(operator_type *)token->obj;
     if (!are_valid_input_types(op, left_type, right_type)) {
         set_type_error(op, left_type, right_type);
+        set_status(SEMANTIC_INCOMPATIBLE_OPERANDS);
     }
 
     /* 
@@ -305,21 +314,32 @@ static io_type is_valid_ast_helper(const node_t *node) {
         const token_t *left_token = node->left->token;
         const token_t *right_token = node->right->token;
         semantic_status stat = run_semantic_operand_checks(op, left_token, right_token);
-        if (stat != SEMANTIC_OK) {
+        if (stat != SEMANTIC_OK && !has_error()) {
             set_operand_error(stat, op, left_token, right_token);
+            set_status(stat);
         }
     }
 
-
-    /* Regardless of a type error, we continue. The first type error written to the global
-    * buffer is kept and not overwritten, so we just proceed until finishing the entire traversal */
+    /* Complete tree traversal regardless of error, if any */
     return get_output_type(op, left_type, right_type); 
 }
 
 
+/* This is the only function in this module (and its helper) that shall set 
+* errors to the global buffer. It will do so via set_type_error and set_operand_error. */
+semantic_status is_semantically_valid_ast(const ast_t *ast, io_type *output_type) {
+    if (!ast || !ast->root) {
+        return SEMANTIC_NULL_ARGS;
+    }
+    set_status(SEMANTIC_OK); 
+    io_type final_output_type = is_valid_ast_helper(ast->root); 
+    if (output_type) { *output_type = final_output_type; }
+    return get_status();
+}
 
 
 bool are_valid_input_types(operator_type op, io_type left, io_type right) {
+
     switch (op) {
 
         /* Add, subtract, and multiply can be done with scalars and matrices */
@@ -348,10 +368,6 @@ bool are_valid_input_types(operator_type op, io_type left, io_type right) {
         default:
             return false;
     }
-}
-
-
-bool set_semantic_error(semantic_status status) {
 }
 
 
@@ -459,7 +475,6 @@ semantic_status valid_sub_operands(const token_t *a, const token_t *b) {
 * FIX: we should support a scalar times a matrix. Currently only scalar-scalar and matrix-matrix 
 * is allowed.
 */
-
 semantic_status valid_mul_operands(const token_t *first, const token_t *second) {
     if (!first || !second) { 
         return SEMANTIC_NULL_ARGS;

@@ -79,8 +79,11 @@ typedef enum {
 * has a valid_OPERATORNAME_operand(s) function defined in this 
 * module which is responsible for checking whether an operand or
 * operands are mathematically valid operands for some operator.
+*
+* If `output_type` is not NULL, the predicted output type of the expression is written
+* there.
 */
-semantic_status is_semantically_valid_ast(const ast_t *ast);
+semantic_status is_semantically_valid_ast(const ast_t *ast, io_type *output_type);
 
 
 /*
