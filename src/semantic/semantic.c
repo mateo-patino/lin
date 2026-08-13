@@ -150,7 +150,7 @@ static bool is_operand_token(const token_t *tok) {
 
 
 /*
-* Returns true if `node` has operand children.
+* Returns true if `node` has exactly two operand children.
 */
 static bool has_operand_children(const node_t *node) {
     if (!node || !node->left || !node->right) {
@@ -159,6 +159,22 @@ static bool has_operand_children(const node_t *node) {
     const token_t *left_tok = node->left->token;
     const token_t *right_tok = node->right->token;
     if (!is_operand_token(left_tok) || !is_operand_token(right_tok)) {
+        return false;
+    }
+    return true;
+}
+
+
+/*
+* Returns true if node has exactly one operand child and it is the right child.
+* The left child must be NULL.
+*/
+static bool has_operand_right_child(const node_t *node) {
+    if (!node || !node->right || node->left != NULL) {
+        return false;
+    }
+    const token_t *right_tok = node->right->token;
+    if (!is_operand_token(right_tok)) {
         return false;
     }
     return true;
@@ -197,7 +213,7 @@ static semantic_status run_semantic_operand_checks(operator_type op, const token
 
 static const char *token_to_str(const token_t *tok) {
     if (!tok) {
-        return "";
+        return NULL;
     }
 
     /* NEEDSWORK: this function has access the token's data (e.g. scalar value, matrix entries, etc.)
@@ -227,39 +243,61 @@ static const char *token_to_str(const token_t *tok) {
 
 static bool set_operand_error(semantic_status stat, operator_type op, const token_t *left, const token_t *right) {
     const char *op_str = op_to_str(op);
+    bool use_unary_version = false;
+
     const char *left_str = token_to_str(left);
     const char *right_str = token_to_str(right);
 
-    /*
-    * Only semantic error codes that are triggered by exactly two operands shall have an error
-    * message that prints both operands (e.g. SEMANITC_INCOMPATIBLE_DIMENSIONS). Some errors may be
-    * triggered by one or two operands (e.g. SEMANTIC_INFINITE_OR_NAN_SCALAR, which is generally raised
-    * when !is_infinite_or_nan(a) || !is_infinite_or_nan(b) evaluates to true).
-    *
-    */
+    /* Check if unary operand error case */
+    if (!left && right) {
+        use_unary_version = true;
+    }
+
     switch (stat) {
         case SEMANTIC_OK:
             return false;
+
         case SEMANTIC_INCOMPATIBLE_OPERANDS:
+            if (use_unary_version) {
+                return set_error("'%s' is mathematically incompatible with '%s'.", 
+                                   right_str, op_str); 
+            }
             return set_error("'%s' and '%s' are mathematically incompatible with %s.", 
                             left_str, right_str, op_str);
+
         case SEMANTIC_FP_OVERFLOW:
             return set_error("'%s' operation results in floating-point overflow.", op_str);
+
         case SEMANTIC_INCOMPATIBLE_DIMENSIONS:
-            return set_error("'%s' and '%s' have incompatible matrix dimensions.", left_str, right_str);
+            if (use_unary_version) {
+                return set_error("'%s' has incompatible dimensions for '%s'operation.", right_str, op_str);
+            }
+            return set_error("'%s' and '%s' have incompatible dimensions.", left_str, right_str);
+
         case SEMANTIC_INFINITE_OR_NAN_SCALAR:
             return set_error("Infinite or undefined scalar.");
+
         case SEMANTIC_INFINITE_OR_NAN_ENTRY:
             return set_error("Infinite or undefined matrix entry.");
+
         case SEMANTIC_DIVISION_BY_ZERO:
+            /* Should never need a unary version */
             return set_error("'%s' and '%s' produce division by zero.", left_str, right_str);
+        
         case SEMANTIC_NONSQUARE_MATRIX:
+            if (use_unary_version) {
+                return set_error("'%s' operation expected a square matrix, got '%s'.",
+                                  op_str, right_str);
+            }
             return set_error("'%s' operation expected a square matrix, got non-square matrix.",
-                    op_str);
+                              op_str);
+        
         case SEMANTIC_EXPECTED_MATRIX:
             return set_error("'%s' operation expected a matrix.", op_str);
+        
         case SEMANTIC_NULL_ARGS:
             return set_error("Expected dereferenceable pointer, got NULL.");
+        
         default:
             return false;
     }
@@ -306,16 +344,27 @@ static io_type is_valid_ast_helper(const node_t *node) {
 
     /* 
     * Check if `node` is at the second-to-deepest level (i.e. both of its children are 
-    * operands), and if so, do operand checks. We only do these checks at the bottom 
-    * of the tree because the operands provided by the user are immediately available 
-    * without any linear algebra computations.
+    * operands or one is NULL and the other is not), and if so, do operand checks. We 
+    * only do these checks at the bottom of the tree because the operands provided by 
+    * the user are immediately available without any linear algebra computations.
     */
+    semantic_status stat;
+    const token_t *left_token, *right_token;
     if (has_operand_children(node)) {
-        const token_t *left_token = node->left->token;
-        const token_t *right_token = node->right->token;
-        semantic_status stat = run_semantic_operand_checks(op, left_token, right_token);
+        left_token = node->left->token;
+        right_token = node->right->token;
+        stat = run_semantic_operand_checks(op, left_token, right_token);
         if (stat != SEMANTIC_OK && !has_error()) {
             set_operand_error(stat, op, left_token, right_token);
+            set_status(stat);
+        }
+    }
+    /* Unary operator, so left child is NULL and only operand is in the right child */
+    else if (has_operand_right_child(node)) {
+        right_token = node->right->token;
+        stat = run_semantic_operand_checks(op, NULL, right_token);
+        if (stat != SEMANTIC_OK && !has_error()) {
+            set_operand_error(stat, op, NULL, right_token);
             set_status(stat);
         }
     }
