@@ -75,11 +75,11 @@ static void set_type_error(operator_type op, io_type left, io_type right) {
     right_str = right == SEM_SCALAR ? "scalar" : "matrix";
 
     if (unary_type_error) {
-        set_error("Operand of type '%s' is mathematically incompatible with '%s'.",
+        set_error("Operand of type '%s' is incompatible with '%s'.",
                    right_str, op_str);
     }
     else {
-        set_error("Operands of type '%s' and '%s' are mathematically incompatible with '%s'.",
+        set_error("Operands of type '%s' and '%s' are incompatible with '%s'.",
                   left_str, right_str, op_str); 
     }
 }
@@ -217,7 +217,8 @@ static const char *token_to_str(const token_t *tok) {
     }
 
     /* NEEDSWORK: this function has access the token's data (e.g. scalar value, matrix entries, etc.)
-    * The messages it returns to set_operand_error can be made richer and more informative. */
+    * The messages it returns to set_operand_error can be made richer and more informative. 
+    * Use a static global buffer to write strings there or memory arena */
     token_type tok_type = tok->type;
     switch (tok_type) {
         case SCALAR:
@@ -272,7 +273,7 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
             if (use_unary_version) {
                 return set_error("'%s' has incompatible dimensions for '%s'operation.", right_str, op_str);
             }
-            return set_error("'%s' and '%s' have incompatible dimensions.", left_str, right_str);
+            return set_error("'%s' and '%s' have incompatible dimensions for '%s'.", left_str, right_str, op_str);
 
         case SEMANTIC_INFINITE_OR_NAN_SCALAR:
             return set_error("Infinite or undefined scalar.");
@@ -309,11 +310,24 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
 * of semantic checks on every parent-child-child node triplet: 
 *
 * 1) do the children nodes have mathematically valid types? For example, if an 
-* operator is ADD (add), its children must be either both scalars or both matrices. 
+* operator is ADD (add), its children must be either both scalars or both matrices. We check
+* for this by recursively determining the output type (matrix or scalar) that each subtree
+* in the AST produces and propagating the result upwards.
 *
+* NEEDSWORK: currently, we use io_type enum values to represent matrix and scalar types. It would
+* be great if we could recursively check matrix dimensions as well. For example, the current semantic
+* analysis code does not detect an error in this expression "4 mul 2x2 1 1 1 1 + 1x1 1". There is
+* obviously a dimension mismatch between the 2x2 and the 1x1 matrices. The current recursive routine 
+* only propagates type information up each subtree but it does not carry any matrix information, so the 
+* '+' operator sees it's adding two matrices and is happy. It would be useful if the '+' operator knew
+* that adding a 2x2 matrix to a 1x1 matrix is impossible, and so an error is raised. This feature
+* would likely require replacing the io_type enum with a struct that packs type and matrix dimension info
+* together and propagating structs through the recursion.
+* 
 * 2) For the deepest operator nodes (the nodes that are parents to the user-provided operands), 
 * are the user-provided operands mathematically valid? In particular, do they have the right
 * types, matrix dimensions, are all entries or scalars finite, etc.
+*
 */
 static io_type is_valid_ast_helper(const node_t *node) {
     if (!node) {
@@ -520,15 +534,12 @@ semantic_status valid_sub_operands(const token_t *a, const token_t *b) {
 }
 
 
-/*
-* FIX: we should support a scalar times a matrix. Currently only scalar-scalar and matrix-matrix 
-* is allowed.
-*/
 semantic_status valid_mul_operands(const token_t *first, const token_t *second) {
     if (!first || !second) { 
         return SEMANTIC_NULL_ARGS;
     }
 
+    /* Scalar times a scalar */
     if (first->type == SCALAR && second->type == SCALAR) { 
         const scalar_t *sca = (const scalar_t *)first->obj;
         const scalar_t *lar = (const scalar_t *)second->obj;
@@ -545,6 +556,7 @@ semantic_status valid_mul_operands(const token_t *first, const token_t *second) 
 
         return SEMANTIC_OK;
     }
+    /* Matrix multiplication */
     else if (first->type == MATRIX && second->type == MATRIX) {
         const matrix_t *mat = (const matrix_t *)first->obj;
         const matrix_t *rix = (const matrix_t *)second->obj;
@@ -572,7 +584,31 @@ semantic_status valid_mul_operands(const token_t *first, const token_t *second) 
         return SEMANTIC_OK;
     }
 
+    /* Scalar multiplication. NEEDSWORK: condense these two else-ifs into one? */
+    const scalar_t *scalar;
+    const matrix_t *matrix;
+    if (first->type == SCALAR && second->type == MATRIX) {
+       scalar = (scalar_t *)first->obj;
+       matrix = (matrix_t *)second->obj;
+       goto CHECK_SCALAR_MULTIPLICATION;
+    }
+    else if (first->type == MATRIX && second->type == SCALAR) {
+        scalar = (scalar_t *)second->obj;
+        matrix = (matrix_t *)first->obj;
+        goto CHECK_SCALAR_MULTIPLICATION;
+    }
+
+    /* If we reached this, first and second are not valid operands*/
     return SEMANTIC_INCOMPATIBLE_OPERANDS;
+
+CHECK_SCALAR_MULTIPLICATION:
+    if (is_infinite_or_nan_scalar(*scalar)) {
+        return SEMANTIC_INFINITE_OR_NAN_SCALAR;
+    }
+    else if (!has_finite_entries(matrix)) {
+        return SEMANTIC_INFINITE_OR_NAN_ENTRY;
+    }
+    return SEMANTIC_OK;
 }
 
 
