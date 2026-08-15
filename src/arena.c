@@ -83,6 +83,7 @@ char *awrite(const char *src, size_t sz, arena_t *arena) {
 
     char *dst = arena->start + arena->offset;
     memcpy(dst, src, sz);
+    arena->offset += sz;
 
     return dst;
 }
