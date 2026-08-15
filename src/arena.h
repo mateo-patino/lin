@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 typedef struct { 
-    const char *start;
+    char *start;
     size_t capacity;
     size_t offset;
 } arena_t;
