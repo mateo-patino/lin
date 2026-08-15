@@ -21,3 +21,12 @@ arena_t *create_arena(size_t capacity) {
 
     return arena;
 }
+
+
+void free_arena(arena_t *arena) {
+    if (!arena || !arena->start) {
+        return;
+    }
+    free(arena->start);
+    free(arena);
+}
