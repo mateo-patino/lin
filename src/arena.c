@@ -16,13 +16,19 @@ static size_t get_open_bytes(const arena_t *arena) {
 
 
 /*
-* 
+* Resizes the memory block pointed at by `mem` to a size of `new_capacity`.
+* It returns a pointer to the new memory block upong success and NULL upon
+* failure. If the reallocation fails, note that the original memory block
+* remains completely valid and unchanged.
 */
 static char *resize_memory(char *mem, size_t new_capacity) {
     if (!mem) {
         return NULL;
     }
 
+    /* The C standard guarnatees realloc returns an aligned address that is
+    * suitable for all data types (i.e. realloc will returns an address aligned
+    * to ALIGNMENT). */
     char *new_mem = (char *)realloc(mem, new_capacity);
     if (!new_mem) {
         return NULL;
@@ -31,25 +37,27 @@ static char *resize_memory(char *mem, size_t new_capacity) {
 }
 
 
+
 arena_t *create_arena(size_t capacity) {
     if (!capacity) {
         return NULL;
     }
-
 
     arena_t *arena = (arena_t *)malloc(sizeof(arena_t));
     if (!arena) {
         return NULL;
     }
 
-    char *mem = (char *)malloc(capacity);
+    size_t aligned_capacity = ALIGN_UP(capacity);
+    char *mem = (char *)aligned_alloc(ALIGNMENT, aligned_capacity);
     if (!mem) {
         free(arena);
         return NULL;
     }
 
+    memset(mem, 0, aligned_capacity);
     arena->start = mem;
-    arena->capacity = capacity;
+    arena->capacity = aligned_capacity;
     arena->offset = 0;
 
     return arena;
@@ -65,14 +73,14 @@ void free_arena(arena_t *arena) {
 }
 
 
-char *awrite(const char *src, size_t sz, arena_t *arena) {
-    if (!arena || !src) {
+size_t awrite(const char *src, size_t sz, arena_t *arena) {
+    if (!arena || !src || !sz) {
         return NULL;
     }
 
     /* Resize if neeed */
     if (get_open_bytes(arena) < sz) { /* will likely need to change to account for alingment */
-        size_t new_capacity = 2 * arena->capacity + sz;
+        size_t new_capacity = ALIGN_UP(2 * arena->capacity + sz);
         char *new_mem = resize_memory(arena->start, new_capacity);
         if (!new_mem) {
             return NULL;
@@ -81,9 +89,9 @@ char *awrite(const char *src, size_t sz, arena_t *arena) {
         arena->capacity = new_capacity;
     }
 
-    char *dst = arena->start + arena->offset;
-    memcpy(dst, src, sz);
-    arena->offset += sz;
-
-    return dst;
+    /* Write `sz` bytes at the current offset which is guaranteed to be an aligned value */
+    size_t current_offset = arena->offset;
+    memcpy(arena->start + current_offset, src, sz);
+    arena->offset = ALIGN_UP(current_offset + sz);
+    return current_offset;
 }

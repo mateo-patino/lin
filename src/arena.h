@@ -73,10 +73,10 @@ void free_arena(arena_t *arena);
 * If the arena cannot fit the new object, the arena gets resized 
 * automatically.
 *
-* It returns a pointer to the first byte of the new object in the arena
-* upon success and NULL upon failure.
+* It returns an integer representing the offset from `start` where the
+* object was allocated.
 */
-char *awrite(const char *src, size_t sz, arena_t *arena);
+size_t awrite(const char *src, size_t sz, arena_t *arena);
 
 
 #endif
