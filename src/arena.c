@@ -23,7 +23,7 @@ static size_t get_open_space(const arena_t *arena) {
 * remains completely valid and unchanged.
 */
 static char *resize_memory(char *mem, size_t new_capacity) {
-    if (!mem) {
+    if (!mem || new_capacity > MAX_CAPACITY) {
         return NULL;
     }
     /* The C standard guarantees realloc returns an aligned address that is
@@ -70,7 +70,7 @@ void free_arena(arena_t *arena) {
 
 
 size_t awrite(const char *src, size_t sz, arena_t *arena) {
-    if (!arena || !src || !sz) {
+    if (!arena || !src || !sz || sz > MAX_CAPACITY) {
         return SIZE_MAX;
     }
 
