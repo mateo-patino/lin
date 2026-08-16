@@ -22,6 +22,9 @@
 * 16. max_align_t is sort of like 16 in this example. It is a value that
 * large enough to align every other possible type.
 *
+* A key convention of this interface is that `offset` and `capacity` will 
+* always be ALIGNED. 
+*
 * NEEDSWORK: using max_align_t adds a lot of padding bytes to the 
 * arena's memory block. We could reduce memory usage by using alignof()
 * and having callers pass an alignment value that is specific to the type
@@ -29,6 +32,7 @@
 */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <stdalign.h>
 
@@ -38,6 +42,12 @@
 
 /* Align `val` up to ALIGNMENT */
 #define ALIGN_UP(val) (((val) + ALIGNMENT - 1) & ~(ALIGNMENT - 1))
+
+/* The / 4 is a safety margin since various expressions in this interface
+* can lead to overflow (e.g. val + ALIGNMENT, current_offset + sz, etc.).
+* We'll simply reject any arenas greater than SIZE_MAX / 4 as well as any
+*  `sz` arguments in the allocator that are greater than this value. */
+#define MAX_CAPACITY (SIZE_MAX / 4)
 
 typedef struct { 
     char *start;
@@ -74,7 +84,9 @@ void free_arena(arena_t *arena);
 * automatically.
 *
 * It returns an integer representing the offset from `start` where the
-* object was allocated.
+* object was allocated. Upon failure, SIZE_MAX is returned. It is
+* guaranteed that SIZE_MAX will never be a valid offset value given the
+* MAX_CAPACITY constraint.
 */
 size_t awrite(const char *src, size_t sz, arena_t *arena);
 
