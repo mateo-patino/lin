@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 
 /*
@@ -25,15 +26,10 @@ static char *resize_memory(char *mem, size_t new_capacity) {
     if (!mem) {
         return NULL;
     }
-
-    /* The C standard guarnatees realloc returns an aligned address that is
+    /* The C standard guarantees realloc returns an aligned address that is
     * suitable for all data types (i.e. realloc will returns an address aligned
     * to ALIGNMENT). */
-    char *new_mem = (char *)realloc(mem, new_capacity);
-    if (!new_mem) {
-        return NULL;
-    }
-    return new_mem;
+    return (char *)realloc(mem, new_capacity);
 }
 
 
@@ -65,7 +61,7 @@ arena_t *create_arena(size_t capacity) {
 
 
 void free_arena(arena_t *arena) {
-    if (!arena || !arena->start) {
+    if (!arena) {
         return;
     }
     free(arena->start);
@@ -75,15 +71,15 @@ void free_arena(arena_t *arena) {
 
 size_t awrite(const char *src, size_t sz, arena_t *arena) {
     if (!arena || !src || !sz) {
-        return NULL;
+        return SIZE_MAX;
     }
 
     /* Resize if needed */
-    if (get_open_space(arena) < ALIGN_UP(sz)) { /* will likely need to change to account for alingment */
+    if (get_open_space(arena) < ALIGN_UP(sz)) {
         size_t new_capacity = ALIGN_UP(2 * arena->capacity + sz);
         char *new_mem = resize_memory(arena->start, new_capacity);
         if (!new_mem) {
-            return NULL;
+            return SIZE_MAX;
         }
         arena->start = new_mem;
         arena->capacity = new_capacity;
