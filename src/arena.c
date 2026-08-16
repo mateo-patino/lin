@@ -7,7 +7,7 @@
 /*
 * Returns the number of available bytes in the arena.
 */
-static size_t get_open_bytes(const arena_t *arena) {
+static size_t get_open_space(const arena_t *arena) {
     if (!arena) {
         return 0;
     }
@@ -39,7 +39,7 @@ static char *resize_memory(char *mem, size_t new_capacity) {
 
 
 arena_t *create_arena(size_t capacity) {
-    if (!capacity) {
+    if (!capacity || capacity > MAX_CAPACITY) {
         return NULL;
     }
 
@@ -78,8 +78,8 @@ size_t awrite(const char *src, size_t sz, arena_t *arena) {
         return NULL;
     }
 
-    /* Resize if neeed */
-    if (get_open_bytes(arena) < sz) { /* will likely need to change to account for alingment */
+    /* Resize if needed */
+    if (get_open_space(arena) < ALIGN_UP(sz)) { /* will likely need to change to account for alingment */
         size_t new_capacity = ALIGN_UP(2 * arena->capacity + sz);
         char *new_mem = resize_memory(arena->start, new_capacity);
         if (!new_mem) {
