@@ -6,12 +6,11 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define ERROR_BUFSIZE 256
 
 /* Stores an error message */
+#define ERROR_BUFSIZE 256
 static char errbuf[ERROR_BUFSIZE];
 static bool has_msg = false;
-
 
 void clear_error(void) {
     memset(errbuf, '\0', ERROR_BUFSIZE);
