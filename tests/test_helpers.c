@@ -1,5 +1,6 @@
 #include "test_helpers.h"
 #include "types/matrix.h"
+#include "types/token.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,6 +18,30 @@ void perr(const char *fmt, ...) {
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
+}
+
+
+const char *operator_to_str(operator_type op) {
+    switch (op) {
+        case ADD:
+            return "ADD";
+        case SUB:
+            return "SUB";
+        case MUL:
+            return "MUL";
+        case DIV:
+            return "DIV";
+        case DET:
+            return "DET";
+        case INV:
+            return "INV";
+        case RREF:
+            return "RREF";
+        case NUM_OP:
+            return "NUM_OP";
+        default:
+            return "'Unknown operator'";
+    }
 }
 
 

@@ -2,6 +2,7 @@
 #define HELPERS_H
 
 #include "types/matrix.h"
+#include "types/token.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,11 @@ typedef struct {
 */
 void perr(const char *fmt, ...);
 
+
+/*
+* Returns the string representation of each enum value operator_type
+*/
+const char *operator_to_str(operator_type op);
 
 /*
 * Returns a pointer to a string representing the common name associated
