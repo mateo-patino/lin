@@ -57,13 +57,27 @@ bool assert_operator_node(const node_t *node, operator_type op);
 void assert_operator_node_failed(operator_type op, const char *file, int line, const char *func);
 #define ASSERT_OPERATOR_NODE(node, op) \
     do { \
-        const node_t *_node = (const node_t *)(node); \
         operator_type _op = (op); \
-        if (!assert_operator_node(_node, _op)) { \
-            assert_operator_node_failed(_node, _op, __FILE__, __LINE__, __func__); \
+        if (!assert_operator_node((const node_t *)(node), _op)) { \
+            assert_operator_node_failed(_op, __FILE__, __LINE__, __func__); \
             return false; \
         } \
-    } while (0) 
+    } while (0)
 
+
+/*
+* Asserts that `node` points to an AST node containing a scalar `val`.
+*/
+bool assert_scalar_node(const node_t *node, scalar_t val);
+void assert_scalar_node_failed(scalar_t val, const char* file, int line, const char *func);
+
+#define ASSERT_SCALAR_NODE(node, val) \
+    do { \
+        scalar_t _val = (scalar_t)(val); \
+        if (!assert_scalar_node((node), _val)) { \
+            assert_scalar_node_failed(_val, __FILE__, __LINE__, __func__); \
+            return false; \
+        } \
+    } while (0)
 
 #endif
