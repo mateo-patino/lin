@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <assert.h>
 
 
 /* 
@@ -71,7 +72,7 @@ static void compare_operators(tuple_t *other, tuple_t *last_so_far) {
     if (!other || !last_so_far) {
         return;
     }
-    
+
     /* Always choose the operator with the lowest depth */
     if (other->depth < last_so_far->depth) {
         goto UPDATE_LAST_SO_FAR;
@@ -107,6 +108,7 @@ static void compare_operators(tuple_t *other, tuple_t *last_so_far) {
 
         }
     }
+    return;
 
 UPDATE_LAST_SO_FAR:
     memcpy(last_so_far, other, sizeof(tuple_t));
@@ -233,7 +235,6 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     return tree;
 }
 
-
 node_t *create_ast_helper(const token_t *tokens, int low, int high) {
     if (!tokens) {
         return NULL;
@@ -270,8 +271,17 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high) {
     * both sides for binary operators
     */
     if (is_unary_operator(tokens + last_op_index)) {
-        /* Convention: unary operators will have their RIGHT child set and their 
-        * LEFT child will be NULL */
+        
+        /*
+        * When a unary operator is the last operator to be evaluated in the window [low, high], 
+        * we must check that there no extraneous 
+        */
+
+
+        /* 
+        * Convention: unary operators will have their RIGHT child set and their 
+        * LEFT child will be NULL.
+        */
         left = NULL;
         right = create_ast_helper(tokens, last_op_index + 1, high);
         goto RETURN_NEW_NODE;
