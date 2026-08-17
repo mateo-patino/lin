@@ -5,6 +5,8 @@
 #include <stdlib.h>
 
 #include "types/matrix.h"
+#include "types/token.h"
+#include "parser/parser.h"
 #include "test_helpers.h"
 
 /* Assert `expr` is true */
@@ -48,6 +50,20 @@ bool equal_matrix_data(const scalar_t *actual, const scalar_t *expected, size_t 
             return false; \
         } \
     } while (0)
+
+
+/* Assert that `node` points to node_t containing an operator of type `op`. */
+bool assert_operator_node(const node_t *node, operator_type op);
+void assert_operator_node_failed(operator_type op, const char *file, int line, const char *func);
+#define ASSERT_OPERATOR_NODE(node, op) \
+    do { \
+        const node_t *_node = (const node_t *)(node); \
+        operator_type _op = (op); \
+        if (!assert_operator_node(_node, _op)) { \
+            assert_operator_node_failed(_node, _op, __FILE__, __LINE__, __func__); \
+            return false; \
+        } \
+    } while (0) 
 
 
 #endif
