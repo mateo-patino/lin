@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
                 INT_MAX);
         goto FREE_TOKENS_FAIL;
     }
-    inspect_tokens(tokens, token_count);
 
     /* Parse the tokens to create an AST */
     parse_status parse_status = PARSE_OK;
@@ -89,15 +88,26 @@ int main(int argc, char **argv) {
         goto FREE_AST_AND_TOKENS_FAIL;
     }
 
-    /* Peform semantic checks on the AST */
-    semantic_status sem_status = is_semantically_valid_ast(ast);
+    /* Perform semantic checks on the AST */
+    io_type out_type;
+    semantic_status sem_status = is_semantically_valid_ast(ast, &out_type);
     if (sem_status != SEMANTIC_OK) {
-        if (!set_semantic_error(sem_status) || !print_error_message()) {
+        if (!print_error_message()) {
             fprintf(stderr, "Error: Mathematically invalid expression.\n");
         }
         goto FREE_AST_AND_TOKENS_FAIL;
     }
-    
+
+    /*
+    * FIX: expressions as "3 det 2x2 1 1 1 1" do not produce
+    * any errors. These should be caught in the parser.
+    *
+    * After fixing this, implement the memory arena module and probably
+    * use it to tackle the richer tok_to_str version. You could probably also
+    * just use a static buffer to write nul-terminated character sequences.
+    */
+   
+    (void)inspect_tokens;
     fully_free_tokens(tokens, token_count);
     fully_free_ast(ast);
 
