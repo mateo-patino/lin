@@ -2,10 +2,12 @@
 #define MATRIX_H
 
 #include <stdbool.h>
+#include <float.h>
 
 /* Scalar type */
 typedef double scalar_t;
 #define PRISCALAR "%.*f"
+#define SCALAR_MAX DBL_MAX
 
 /* Matrix interface... */
 typedef struct {
