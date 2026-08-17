@@ -274,9 +274,13 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high) {
         
         /*
         * When a unary operator is the last operator to be evaluated in the window [low, high], 
-        * we must check that there no extraneous 
+        * we must check that there are no extraneous operands to the left of the operator.
+        * In other words, the operator must be located at index `low`.
         */
-
+        if (last_op_index != low) {
+            set_error("Invalid algebraic expression.");
+            RETURN_NULL_AND_STATUS(PARSE_INVALID_EXPRESSION);
+        }
 
         /* 
         * Convention: unary operators will have their RIGHT child set and their 
