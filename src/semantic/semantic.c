@@ -125,6 +125,10 @@ static io_type get_output_type(operator_type op, io_type left, io_type right) {
             return SEM_NULL;
 
         case DET:
+            if (left == SEM_NULL && right == SEM_MATRIX) {
+                return SEM_SCALAR; 
+            }
+            return SEM_NULL;
         case RREF:
         case INV:
             /* Note we use the convention that unary operators have NULL left children
@@ -348,6 +352,7 @@ static io_type is_valid_ast_helper(const node_t *node) {
     io_type left_type = is_valid_ast_helper(node->left);
     io_type right_type = is_valid_ast_helper(node->right);
 
+
     /* Check left and right types match the expected input types. Write to
     * global error buffer if not. */
     operator_type op = *(operator_type *)token->obj;
@@ -365,9 +370,11 @@ static io_type is_valid_ast_helper(const node_t *node) {
     semantic_status stat;
     const token_t *left_token, *right_token;
     if (has_operand_children(node)) {
+
         left_token = node->left->token;
         right_token = node->right->token;
         stat = run_semantic_operand_checks(op, left_token, right_token);
+
         if (stat != SEMANTIC_OK && !has_error()) {
             set_operand_error(stat, op, left_token, right_token);
             set_status(stat);
@@ -375,8 +382,10 @@ static io_type is_valid_ast_helper(const node_t *node) {
     }
     /* Unary operator, so left child is NULL and only operand is in the right child */
     else if (has_operand_right_child(node)) {
+
         right_token = node->right->token;
         stat = run_semantic_operand_checks(op, NULL, right_token);
+
         if (stat != SEMANTIC_OK && !has_error()) {
             set_operand_error(stat, op, NULL, right_token);
             set_status(stat);
