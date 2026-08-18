@@ -2,8 +2,10 @@
 #include "types/token.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
+#include "errorprinter.h"
 
 #include <assert.h>
+
 
 /*
 * Helper for creating an AST from an input string.
@@ -26,7 +28,7 @@ static node_t *create_ast_from_string(const char *expr, parse_status *status) {
     assert(tok_status == TOKENS_OK);
 
     /* This is the part we're interested in in these tests */
-    parse_status par_status;
+    parse_status par_status = PARSE_OK;
     ast_t *ast = create_ast_from_tokens(tokens, token_count, &par_status);
 
     if (status) {
@@ -162,7 +164,7 @@ bool test_valid_ast_medium(void) {
     ASSERT_MATRIX_NODE(root->right->right, &matrix);
 
     /* should behave as rref ( inv ( 67 * 2x2 1 0 0 1 ) ) */
-    root = create_ast_from_string("rref inv ( 67 * 2x2 1 0 0 1 ", &st);
+    root = create_ast_from_string("rref inv ( 67 * 2x2 1 0 0 1 )", &st);
     ASSERT_TRUE(st == PARSE_OK);
     ASSERT_OPERATOR_NODE(root, RREF);
     ASSERT_TRUE(root->left == NULL);
@@ -271,10 +273,96 @@ static bool test_valid_ast_hard(void) {
 }
 
 
+static bool test_invalid_ast_easy(void) {
+    parse_status st;
+
+    create_ast_from_string("+", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("1 + ", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("+ +", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("1 2 3 4 5 6 7 8 9", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("det", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("det ( inv (  ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("add sub div mul det inv rref", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+     
+    return true;
+}
+
+
+/* More realistic expresions */
+static bool test_invalid_ast_medium(void) {
+    parse_status st;
+
+    create_ast_from_string("1 det 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+
+    create_ast_from_string("1 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    create_ast_from_string("2x2 1 2 3 4 67", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+
+    /*
+    * TODO: Add parethesis validation to the parser
+    */
+    create_ast_from_string("1 + ( 3 * inv 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+    
+    create_ast_from_string("det 2x2 1 1 1 1 * 6 + 7 )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+    
+    create_ast_from_string("1 + 1 (  )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    clear_error();
+    
+    return true;
+}
+
+
 static const test_case_t parser_tests[] = {
     TEST(test_valid_ast_easy),
     TEST(test_valid_ast_medium),
-    TEST(test_valid_ast_hard)
+    TEST(test_valid_ast_hard),
+    TEST(test_invalid_ast_easy),
+    TEST(test_invalid_ast_medium)
 };
 
 
