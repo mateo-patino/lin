@@ -49,6 +49,43 @@ static bool test_valid_ast_easy(void) {
     ASSERT_SCALAR_NODE(root->left, 1);
     ASSERT_SCALAR_NODE(root->right, 1);
 
+    root = create_ast_from_string("1 - 1 + 6.7", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_OPERATOR_NODE(root->left, SUB);
+    ASSERT_SCALAR_NODE(root->right, 6.7);
+    ASSERT_SCALAR_NODE(root->left->left, 1);
+    ASSERT_SCALAR_NODE(root->left->right, 1);
+
+    root = create_ast_from_string("1 + 1 * 2", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_OPERATOR_NODE(root->right, MUL);
+    ASSERT_SCALAR_NODE(root->right->left, 1);
+    ASSERT_SCALAR_NODE(root->right->right, 2);
+
+    const scalar_t entries[] = { 1, 2, 3, 4 };
+    const matrix_test_case_t matrix = { "2x2 1 2 3 4", 2, 2, entries };
+
+    root = create_ast_from_string("det 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DET);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_MATRIX_NODE(root->right, &matrix);
+
+    root = create_ast_from_string("rref 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, RREF);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_MATRIX_NODE(root->right, &matrix);
+    
+    root = create_ast_from_string("inv 2x2 1 2 3 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, INV);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_MATRIX_NODE(root->right, &matrix);
+
     return true;
 }
 
