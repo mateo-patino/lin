@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     * just use a static buffer to write nul-terminated character sequences.
     */
    
-    (void)inspect_tokens;
+    inspect_tokens(tokens, token_count);
     fully_free_tokens(tokens, token_count);
     fully_free_ast(ast);
 

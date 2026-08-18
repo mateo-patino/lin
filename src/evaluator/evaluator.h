@@ -41,7 +41,7 @@ typedef enum {
 
 
 /*
-* Evaluates `ast`.
+* Evaluates `ast` that is guaranteed to be semantically valid.
 *
 * Returns a pointer to a result_t struct. The `obj` member of this result_t 
 * will point to an object in the heap that must be freed by the caller.
