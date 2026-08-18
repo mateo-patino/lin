@@ -30,6 +30,19 @@ typedef struct {
 /* For brace initializing a test_case_t */
 #define TEST(x) {#x, x}
 
+
+/*
+* Struct for arranging a string expression and the expected dimensions and data
+* into one container. 
+*/
+typedef struct {
+    const char *str;
+    uint nrow;
+    uint ncol;
+    const scalar_t *expected_data;
+} matrix_test_case_t;
+
+
 /* (Continuous) array length */
 #define ARRAY_LEN(x) (sizeof(x) / sizeof((x)[0]))
 
