@@ -12,6 +12,10 @@
 * tokens array.
 *
 * Returns a pointer to the root of the AST.
+*
+* 
+* KNOWN BUG: this function leaves some reachable bytes due to the tokens being allocated
+* but never freed in the tests. 
 */
 static node_t *create_ast_from_string(const char *expr, parse_status *status) {
 
@@ -171,10 +175,106 @@ bool test_valid_ast_medium(void) {
     return true;
 }
 
+static bool test_valid_ast_hard(void) {
+    node_t *root;
+    parse_status st;
+
+    const scalar_t entries_a[] = { 1, 0, 0, 1 };
+    const scalar_t entries_b[] = { 2, 1, 1, 2 };
+    const scalar_t entries_c[] = { 1, 2, 3, 5 };
+    const scalar_t entries_d[] = { 2, 0, 0, 3 };
+    const scalar_t entries_e[] = { 1, 2, 3, 4 };
+    const scalar_t entries_f[] = { 3, 1, 1, 1 };
+
+    const matrix_test_case_t matrix_a = { "2x2 1 0 0 1", 2, 2, entries_a };
+    const matrix_test_case_t matrix_b = { "2x2 2 1 1 2", 2, 2, entries_b };
+    const matrix_test_case_t matrix_c = { "2x2 1 2 3 5", 2, 2, entries_c };
+    const matrix_test_case_t matrix_d = { "2x2 2 0 0 3", 2, 2, entries_d };
+    const matrix_test_case_t matrix_e = { "2x2 1 2 3 4", 2, 2, entries_e };
+    const matrix_test_case_t matrix_f = { "2x2 3 1 1 1", 2, 2, entries_f };
+
+    /*
+    * Should behave as:
+    *
+    * ( ( det ( rref ( ( A + B ) * inv ( C ) ) ) + det ( inv ( D ) ) )
+    *   - det ( rref ( E ) ) )
+    * / ( 1 + det ( inv ( F ) ) )
+    */
+    root = create_ast_from_string("( ( det ( rref ( ( 2x2 1 0 0 1 + 2x2 2 1 1 2 ) * inv ( 2x2 1 2 3 5 ) ) ) + det ( inv ( 2x2 2 0 0 3 ) ) ) - det ( rref ( 2x2 1 2 3 4 ) ) ) / ( 1 + det ( inv ( 2x2 3 1 1 1 ) ) )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DIV);
+    ASSERT_OPERATOR_NODE(root->left, SUB);
+    ASSERT_OPERATOR_NODE(root->right, ADD);
+
+    ASSERT_OPERATOR_NODE(root->left->left, ADD);
+    ASSERT_OPERATOR_NODE(root->left->right, DET);
+    ASSERT_SCALAR_NODE(root->right->left, 1);
+    ASSERT_OPERATOR_NODE(root->right->right, DET);
+
+    ASSERT_OPERATOR_NODE(root->left->left->left, DET);
+    ASSERT_OPERATOR_NODE(root->left->left->right, DET);
+    ASSERT_TRUE(root->left->left->left->left == NULL);
+    ASSERT_OPERATOR_NODE(root->left->left->left->right, RREF);
+    ASSERT_TRUE(root->left->left->left->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->left->left->left->right->right, MUL);
+    ASSERT_OPERATOR_NODE(root->left->left->left->right->right->left, ADD);
+    ASSERT_OPERATOR_NODE(root->left->left->left->right->right->right, INV);
+    ASSERT_MATRIX_NODE(root->left->left->left->right->right->left->left, &matrix_a);
+    ASSERT_MATRIX_NODE(root->left->left->left->right->right->left->right, &matrix_b);
+    ASSERT_TRUE(root->left->left->left->right->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->left->left->left->right->right->right->right, &matrix_c);
+
+    ASSERT_TRUE(root->left->left->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->left->left->right->right, INV);
+    ASSERT_TRUE(root->left->left->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->left->left->right->right->right, &matrix_d);
+
+    ASSERT_TRUE(root->left->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->left->right->right, RREF);
+    ASSERT_TRUE(root->left->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->left->right->right->right, &matrix_e);
+
+    ASSERT_TRUE(root->right->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right->right->right, INV);
+    ASSERT_TRUE(root->right->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right->right->right, &matrix_f);
+
+    /*
+    * Should behave as:
+    *
+    * rref ( inv ( ( A + ( B * inv ( C ) ) )
+    *              * ( rref ( D ) - E ) ) )
+    */
+    root = create_ast_from_string("rref ( inv ( ( 2x2 1 0 0 1 + ( 2x2 2 1 1 2 * inv ( 2x2 1 2 3 5 ) ) ) * ( rref ( 2x2 2 0 0 3 ) - 2x2 1 2 3 4 ) ) )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, RREF);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right, INV);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right->right, MUL);
+
+    ASSERT_OPERATOR_NODE(root->right->right->left, ADD);
+    ASSERT_OPERATOR_NODE(root->right->right->right, SUB);
+    ASSERT_MATRIX_NODE(root->right->right->left->left, &matrix_a);
+    ASSERT_OPERATOR_NODE(root->right->right->left->right, MUL);
+    ASSERT_MATRIX_NODE(root->right->right->left->right->left, &matrix_b);
+    ASSERT_OPERATOR_NODE(root->right->right->left->right->right, INV);
+    ASSERT_TRUE(root->right->right->left->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right->left->right->right->right, &matrix_c);
+
+    ASSERT_OPERATOR_NODE(root->right->right->right->left, RREF);
+    ASSERT_TRUE(root->right->right->right->left->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right->right->left->right, &matrix_d);
+    ASSERT_MATRIX_NODE(root->right->right->right->right, &matrix_e);
+
+    return true;
+}
+
 
 static const test_case_t parser_tests[] = {
     TEST(test_valid_ast_easy),
-    TEST(test_valid_ast_medium)
+    TEST(test_valid_ast_medium),
+    TEST(test_valid_ast_hard)
 };
 
 
