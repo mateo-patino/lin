@@ -243,7 +243,6 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     }
 
     node_t *root = create_ast_helper(tokens, 0, sz-1);
-    printf("statusss %i\n", get_status());
     if (!root || get_status() != PARSE_OK) {
         /* Forward parser status to external caller */
         if (status) { 
