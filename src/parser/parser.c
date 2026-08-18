@@ -200,6 +200,23 @@ static bool is_unary_operator(const token_t *token) {
 
 
 /*
+* Returns true if at least one operand token exists in the range [low, high]
+*/
+static bool has_any_operands(const token_t *tokens, int low, int high) {
+    if (!tokens) {
+        return false;
+    }
+
+    for (int i = low; i <= high; i++) {
+        if (is_operand_type(tokens + i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/*
 * `status` is a variable provided by the caller, and internally, the parser module will
 * have its own (static) `parse_status` variable.
 * 
@@ -275,9 +292,9 @@ node_t *create_ast_helper(const token_t *tokens, int low, int high) {
         /*
         * When a unary operator is the last operator to be evaluated in the window [low, high], 
         * we must check that there are no extraneous operands to the left of the operator.
-        * In other words, the operator must be located at index `low`.
+        * In other words, there must be no operand tokens in the range [low, last_op_index].
         */
-        if (last_op_index != low) {
+        if (has_any_operands(tokens, low, last_op_index)) {
             set_error("Invalid algebraic expression.");
             RETURN_NULL_AND_STATUS(PARSE_INVALID_EXPRESSION);
         }
