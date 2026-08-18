@@ -35,6 +35,11 @@ static parse_status get_status(void) {
 }
 
 
+static void clear_status(void) {
+    internal_parser_status = PARSE_OK;
+    has_error_status = false;
+}
+
 /* Setting an error status and returning NULL is a commnon pattern */
 #define RETURN_NULL_AND_STATUS(val)  \
     do { \
@@ -238,6 +243,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     }
 
     node_t *root = create_ast_helper(tokens, 0, sz-1);
+    printf("statusss %i\n", get_status());
     if (!root || get_status() != PARSE_OK) {
         /* Forward parser status to external caller */
         if (status) { 
@@ -248,6 +254,12 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     }
 
     if (status) { *status = get_status(); }
+
+    /* 
+    * Reset status so that the current global status doesn't propagate to
+    * future calls the process might make to this function. */ 
+    clear_status();
+
     tree->root = root;
     return tree;
 }
