@@ -13,7 +13,6 @@
 *
 * Returns a pointer to the root of the AST.
 */
-
 static node_t *create_ast_from_string(const char *expr, parse_status *status) {
 
     /* Tokenization should work correctly */
@@ -90,8 +89,92 @@ static bool test_valid_ast_easy(void) {
 }
 
 
+bool test_valid_ast_medium(void) {
+    node_t *root;
+    parse_status st;
+
+    root = create_ast_from_string("1 + 2 * 3 / 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_OPERATOR_NODE(root->right, DIV);
+    ASSERT_OPERATOR_NODE(root->right->left, MUL);
+    ASSERT_SCALAR_NODE(root->right->left->left, 2);
+    ASSERT_SCALAR_NODE(root->right->left->right, 3);
+    ASSERT_SCALAR_NODE(root->right->right, 4);
+
+    root = create_ast_from_string("( 1 + 2 ) * 3 / 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DIV);
+    ASSERT_SCALAR_NODE(root->right, 4);
+    ASSERT_OPERATOR_NODE(root->left, MUL);
+    ASSERT_SCALAR_NODE(root->left->right, 3);
+    ASSERT_OPERATOR_NODE(root->left->left, ADD);
+    ASSERT_SCALAR_NODE(root->left->left->left, 1);
+    ASSERT_SCALAR_NODE(root->left->left->right, 2);
+
+    root = create_ast_from_string("( 1 + 2 ) * ( 3 / 4 )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, MUL);
+    ASSERT_OPERATOR_NODE(root->left, ADD);
+    ASSERT_OPERATOR_NODE(root->right, DIV);
+    ASSERT_SCALAR_NODE(root->left->left, 1);
+    ASSERT_SCALAR_NODE(root->left->right, 2);
+    ASSERT_SCALAR_NODE(root->right->left, 3);
+    ASSERT_SCALAR_NODE(root->right->right, 4);
+
+
+    const scalar_t entries[] = { 1, 0, 0, 1};
+    const matrix_test_case_t matrix = { "2x2 1 0 0 1", 2, 2, entries };
+
+    root = create_ast_from_string("1 + det 2x2 1 0 0 1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_OPERATOR_NODE(root->right, DET);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix);
+
+    /* should behave as 1 + ( det 2x2 1 0 0 1 * 2 ) */
+    root = create_ast_from_string("1 + det 2x2 1 0 0 1 * 2", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_OPERATOR_NODE(root->right, MUL);
+    ASSERT_OPERATOR_NODE(root->right->left, DET);
+    ASSERT_SCALAR_NODE(root->right->right, 2);
+    ASSERT_TRUE(root->right->left->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->left->right, &matrix);
+
+    /* should behave as ( det 2x2 1 0 0 1 ) * ( inv 2x2 1 0 0 1 ) */
+    root = create_ast_from_string("det 2x2 1 0 0 1 * inv 2x2 1 0 0 1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, MUL);
+    ASSERT_OPERATOR_NODE(root->left, DET);
+    ASSERT_OPERATOR_NODE(root->right, INV);
+    ASSERT_TRUE(root->left->left == NULL);
+    ASSERT_MATRIX_NODE(root->left->right, &matrix);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix);
+
+    /* should behave as rref ( inv ( 67 * 2x2 1 0 0 1 ) ) */
+    root = create_ast_from_string("rref ( inv ( 67 * 2x2 1 0 0 1 ) )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, RREF);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right, INV);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right->right, MUL);
+    ASSERT_SCALAR_NODE(root->right->right->left, 67);
+    ASSERT_MATRIX_NODE(root->right->right->right, &matrix);
+    
+    return true;
+}
+
+
 static const test_case_t parser_tests[] = {
-    TEST(test_valid_ast_easy)
+    TEST(test_valid_ast_easy),
+    TEST(test_valid_ast_medium)
 };
 
 
