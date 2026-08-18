@@ -70,7 +70,6 @@ void assert_operator_node_failed(operator_type op, const char *file, int line, c
 */
 bool assert_scalar_node(const node_t *node, scalar_t val);
 void assert_scalar_node_failed(scalar_t val, const char* file, int line, const char *func);
-
 #define ASSERT_SCALAR_NODE(node, val) \
     do { \
         scalar_t _val = (scalar_t)(val); \
@@ -79,5 +78,23 @@ void assert_scalar_node_failed(scalar_t val, const char* file, int line, const c
             return false; \
         } \
     } while (0)
+
+
+/* 
+* Asserts that `node` contains a matrix with the same properties as `matrix`.
+* which should be a pointer to a matrix_test_case_t struct.
+*/
+bool assert_matrix_node(const node_t *node, const matrix_test_case_t *matrix);
+void assert_matrix_node_failed(const matrix_test_case_t *matrix, const char *file, int line, const char *func);
+#define ASSERT_MATRIX_NODE(node, matrix) \
+    do  { \
+        const matrix_test_case_t *_matrix = (const matrix_test_case_t *)(matrix); \
+        if (!assert_matrix_node((node), _matrix)) { \
+            assert_matrix_node_failed(_matrix, __FILE__, __LINE__, __func__); \
+            return false; \
+        } \
+    } \
+    while (0)
+
 
 #endif

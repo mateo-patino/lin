@@ -89,3 +89,35 @@ void assert_scalar_node_failed(scalar_t val, const char* file, int line, const c
     perr("   at %s:%i\n", file, line);
     perr("   in %s\n", func);
 }
+
+
+bool assert_matrix_node(const node_t *node, const matrix_test_case_t *matrix) {
+    if (!node || !node->token || node->token->type != MATRIX) {
+        return false;
+    }
+
+    const matrix_t *other = (const matrix_t *)node->token->obj;
+    if (!other || !other->data) {
+        return false;
+    }
+
+    /* Dimensions */
+    if (other->ncol != matrix->ncol || other->nrow != matrix->nrow) {
+        return false;
+    }
+
+    /* Entries */
+    if (!equal_matrix_data(other->data, matrix->expected_data, matrix->nrow * matrix->ncol)) {
+        return false;
+    }
+
+    return true;
+}
+
+
+void assert_matrix_node_failed(const matrix_test_case_t *matrix, const char *file, int line, const char *func) {
+    perr(BOLD "%s " ANSI_RED "FAILED" ANSI_RESET "\n", func);
+    perr("   Expected AST node with matrix: %s\n", matrix->str);
+    perr("   at %s:%i\n", file, line);
+    perr("   in %s\n", func);
+} 
