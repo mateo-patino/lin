@@ -63,7 +63,7 @@ $(COMPILE_DB):
 		--srcs $(APP_SRCS)
 
 clean:
-	rm -rf $(OBJ_DIR) $(APP_TARGET)
+	rm -rf $(OBJ_DIR) $(APP_TARGET) $(TEST_TARGET)
 
 # Include compile-time generated dependencies
 -include $(APP_OBJS:.o=.d)
