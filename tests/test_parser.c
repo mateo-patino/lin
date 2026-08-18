@@ -158,7 +158,7 @@ bool test_valid_ast_medium(void) {
     ASSERT_MATRIX_NODE(root->right->right, &matrix);
 
     /* should behave as rref ( inv ( 67 * 2x2 1 0 0 1 ) ) */
-    root = create_ast_from_string("rref ( inv ( 67 * 2x2 1 0 0 1 ) )", &st);
+    root = create_ast_from_string("rref inv ( 67 * 2x2 1 0 0 1 ", &st);
     ASSERT_TRUE(st == PARSE_OK);
     ASSERT_OPERATOR_NODE(root, RREF);
     ASSERT_TRUE(root->left == NULL);
