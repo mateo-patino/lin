@@ -1,4 +1,5 @@
 #include "test_lexer.h"
+#include "test_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -38,6 +39,18 @@ int main(void) {
     total_tests += total_lexer;
     total_pass += pass_lexer;
     total_crash += crash_lexer;
+
+    /* Parser tests */
+    fputc('\n', stdout);
+    fprintf(stdout, BOLD LINE "PARSER TESTS" LINE ANSI_RESET "\n"); 
+    uint total_parser = 0;
+    uint crash_parser = 0;
+    uint pass_parser = run_parser_tests(&total_parser, &crash_parser);
+    print_test_summary("Parser", total_parser, pass_parser, crash_parser);
+    
+    total_tests += total_parser;
+    total_pass += pass_parser;
+    total_crash += crash_parser;
     
     /* Overall summary */
     fputc('\n', stdout);
