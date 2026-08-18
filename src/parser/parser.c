@@ -228,14 +228,13 @@ static bool has_any_operands(const token_t *tokens, int low, int high) {
 * The create_ast_from_tokens function is the only point where the caller's status shall be 
 * updated.
 */
-
 ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *status) {
     if (!tokens || !sz) {
         RETURN_NULL_AND_STATUS(PARSE_INVALID_TOKENS);
     }
 
     /* Set global status to OK before starting */
-    set_status(PARSE_OK);
+    clear_status();
     
     ast_t *tree;
     if (!(tree = malloc(sizeof(ast_t)))) {
@@ -248,6 +247,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
         if (status) { 
             *status = get_status();
         }
+        clear_status();
         fully_free_ast(tree);
         return NULL;
     }
@@ -256,7 +256,8 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
 
     /* 
     * Reset status so that the current global status doesn't propagate to
-    * future calls the process might make to this function. */ 
+    * future calls the process might make to this function. 
+    */ 
     clear_status();
 
     tree->root = root;
