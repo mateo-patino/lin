@@ -62,7 +62,7 @@ bool assert_operator_node(const node_t *node, operator_type op) {
 
 void assert_operator_node_failed(operator_type op, const char *file, int line, const char *func) {
     perr(BOLD "%s " ANSI_RED "FAILED" ANSI_RESET "\n", func);
-    perr("  Expected AST node with operator: %s\n", operator_to_str(op));
+    perr("   Expected AST node with operator: %s\n", operator_to_str(op));
     perr("   at %s:%i\n", file, line);
     perr("   in %s\n", func);
 }
@@ -85,7 +85,7 @@ bool assert_scalar_node(const node_t *node, scalar_t val) {
 
 void assert_scalar_node_failed(scalar_t val, const char* file, int line, const char *func) {
     perr(BOLD "%s " ANSI_RED "FAILED" ANSI_RESET "\n", func);
-    perr("  Expected AST node with scalar: " PRISCALAR "\n", val, 6);
+    perr("   Expected AST node with scalar: " PRISCALAR "\n", val, 6);
     perr("   at %s:%i\n", file, line);
     perr("   in %s\n", func);
 }
