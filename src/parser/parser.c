@@ -40,10 +40,19 @@ static void clear_status(void) {
     has_error_status = false;
 }
 
-/* Setting an error status and returning NULL is a commnon pattern */
+/* Setting an error status and returning NULL is a commnon pattern.
+* Note this macro sets the INTERNAL status. */
 #define RETURN_NULL_AND_STATUS(val)  \
     do { \
         set_status(val); \
+        return NULL; \
+    } while (0)
+
+/* This macro sets the CALLER'S status */
+#define RETURN_NULL_AND_CSTATUS(val, status) \
+    do { \
+        parse_status *_status = (status); \
+        if (_status) { *_status = val; } \
         return NULL; \
     } while (0)
 
@@ -268,42 +277,36 @@ static bool has_balanced_parenthesis(const token_t *tokens, size_t sz) {
 * updated.
 */
 ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *status) {
+    /* 
+    * Clear any status from previous calls to this function (note 
+    * the internal status is static and could propagate if not cleared 
+    */
+    clear_status();
+
     if (!tokens || !sz) {
-        RETURN_NULL_AND_STATUS(PARSE_INVALID_TOKENS);
+        RETURN_NULL_AND_CSTATUS(PARSE_INVALID_TOKENS, status);
     }
 
     /* Do parenthesis validation on tokens */
     if (!has_balanced_parenthesis(tokens, sz)) {
         set_error("Unbalanced parentheses.");
-        RETURN_NULL_AND_STATUS(PARSE_UNBALANCED_PARENS);
+        RETURN_NULL_AND_CSTATUS(PARSE_UNBALANCED_PARENS, status);
     }
-
-    /* Set global status to OK before starting */
-    clear_status();
     
     ast_t *tree;
     if (!(tree = malloc(sizeof(ast_t)))) {
-        RETURN_NULL_AND_STATUS(PARSE_MEMORY_FAILURE);
+        RETURN_NULL_AND_CSTATUS(PARSE_MEMORY_FAILURE, status);
     }
 
+    /* create_ast_helper sets the internal status */
     tree->root = create_ast_helper(tokens, 0, sz-1);
     if (!tree->root || get_status() != PARSE_OK) {
-        /* Forward parser status to external caller */
-        if (status) { 
-            *status = get_status();
-        }
-        clear_status();
         fully_free_ast(tree);
-        return NULL;
+        RETURN_NULL_AND_CSTATUS(get_status(), status);
     }
 
-    if (status) { *status = get_status(); }
-
-    /* 
-    * Reset status so that the current global status doesn't propagate to
-    * future calls the process might make to this function. 
-    */ 
-    clear_status();
+    assert(get_status() == PARSE_OK);
+    if (status) { *status = PARSE_OK; }
 
     return tree;
 }
