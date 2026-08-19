@@ -14,7 +14,9 @@ LDLIBS = -lm
 
 APP_TARGET = lin
 TEST_TARGET = lin_test
+TEST_MEMORY = "tests/memory/memorycheck.sh"
 COMPILE_DB = compile_commands.json
+
 
 SRC_DIR = src
 TEST_DIR = tests
@@ -34,7 +36,10 @@ all: $(APP_TARGET) $(COMPILE_DB)
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
-.PHONY: all clean test
+memcheck: $(APP_TARGET)
+	./$(TEST_MEMORY)
+
+.PHONY: all clean test memcheck
 
 # APP BUILD
 $(APP_TARGET): $(APP_OBJS)
