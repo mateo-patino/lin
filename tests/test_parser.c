@@ -276,6 +276,10 @@ static bool test_valid_ast_hard(void) {
 static bool test_invalid_ast_easy(void) {
     parse_status st;
 
+    /*
+    * This unit test causes a segmentation fault on Linux. Figure it out.
+    */
+
     create_ast_from_string("+", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
@@ -319,40 +323,93 @@ static bool test_invalid_ast_easy(void) {
 static bool test_invalid_ast_medium(void) {
     parse_status st;
 
+    clear_error();
     create_ast_from_string("1 det 2x2 1 2 3 4", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
+
+
     clear_error();
-
-
     create_ast_from_string("1 2x2 1 2 3 4", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("2x2 1 2 3 4 67", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
-    /*
-    * TODO: Add parethesis validation to the parser
-    */
+    clear_error();
     create_ast_from_string("1 + ( 3 * inv 2x2 1 2 3 4", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
     
+    clear_error();
     create_ast_from_string("det 2x2 1 1 1 1 * 6 + 7 )", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
     
+    clear_error();
     create_ast_from_string("1 + 1 (  )", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
     
+    clear_error();
+    create_ast_from_string("1 + 1 + ( ( ( 1 ) + 1  )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    return true;
+}
+
+/* Expressions where nearly everything is valid except the last few subtrees. Here we test
+* that an error can be correctly caught and raised deep inside the recursion tree when most 
+* of the AST has been built. */
+static bool test_invalid_ast_hard(void) {
+    parse_status st;
+
+    /* There is a extraneous 67 to the left of a 2x2 matrix at the end of the expression */
+    clear_error();
+    create_ast_from_string("( ( det ( rref ( ( 2x2 1 0 0 1 + 2x2 2 1 1 2 ) * inv ( 2x2 1 2 3 5 ) ) ) + det ( inv ( 2x2 2 0 0 3 ) ) ) - det ( rref ( 2x2 1 2 3 4 ) ) ) / ( 1 + det ( inv ( 67 2x2 3 1 1 1 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extraneous 67 to the left of the rightmost RREF */
+    clear_error();
+    create_ast_from_string("rref ( inv ( ( 2x2 1 0 0 1 + ( 2x2 2 1 1 2 * inv ( 2x2 1 2 3 5 ) ) ) * ( 67 rref ( 2x2 2 0 0 3 ) - 2x2 1 2 3 4 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extraneous + to the left of the rightmost + */
+    clear_error();
+    create_ast_from_string("( ( det ( rref ( ( 2x2 1 0 0 1 + 2x2 2 1 1 2 ) * inv ( 2x2 1 2 3 5 ) ) ) + det ( inv ( 2x2 2 0 0 3 ) ) ) - det ( rref ( 2x2 1 2 3 4 ) ) ) / ( 1 + + det ( inv ( 67 2x2 3 1 1 1 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extraneous + to the left of the rightmost RREF */
+    clear_error();
+    create_ast_from_string("rref ( inv ( ( 2x2 1 0 0 1 + ( 2x2 2 1 1 2 * inv ( 2x2 1 2 3 5 ) ) ) * ( + rref ( 2x2 2 0 0 3 ) - 2x2 1 2 3 4 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extraneous matrix to the right of the rightmost matrix */
+    clear_error();
+    create_ast_from_string("( ( det ( rref ( ( 2x2 1 0 0 1 + 2x2 2 1 1 2 ) * inv ( 2x2 1 2 3 5 ) ) ) + det ( inv ( 2x2 2 0 0 3 ) ) ) - det ( rref ( 2x2 1 2 3 4 ) ) ) / ( 1 + + det ( inv ( 67 2x2 3 1 1 1 2x2 6 7 6 7 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extraneous matrix to the left of the rightmost RREF */
+    clear_error();
+    create_ast_from_string("rref ( inv ( ( 2x2 1 0 0 1 + ( 2x2 2 1 1 2 * inv ( 2x2 1 2 3 5 ) ) ) * ( 2x2 1 2 3 4 rref ( 2x2 2 0 0 3 ) - 2x2 1 2 3 4 ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+    
+    /* There is a extra close parenthesis at the very end of the expression */
+    clear_error();
+    create_ast_from_string("( ( det ( rref ( ( 2x2 1 0 0 1 + 2x2 2 1 1 2 ) * inv ( 2x2 1 2 3 5 ) ) ) + det ( inv ( 2x2 2 0 0 3 ) ) ) - det ( rref ( 2x2 1 2 3 4 ) ) ) / ( 1 + + det ( inv ( 67 2x2 3 1 1 1 ) ) ) )", &st);
+    ASSERT_TRUE(st != PARSE_OK);
+    ASSERT_TRUE(has_error() == true);
+
     return true;
 }
 
@@ -362,7 +419,8 @@ static const test_case_t parser_tests[] = {
     TEST(test_valid_ast_medium),
     TEST(test_valid_ast_hard),
     TEST(test_invalid_ast_easy),
-    TEST(test_invalid_ast_medium)
+    TEST(test_invalid_ast_medium),
+    TEST(test_invalid_ast_hard)
 };
 
 
