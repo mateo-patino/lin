@@ -70,7 +70,7 @@ printf "${ANSI_BOLD}%sMEMORY TESTS%s${ANSI_RESET}\n" "$line" "$line"
 
 # Expression files must satisfy the pattern below
 shopt -s nullglob # By defaul, Bash fills out an empty glob expansion with the pattern string itself. This disables that.
-EXPR_FILES=("tests/memory/*.txt")
+EXPR_FILES=(tests/memory/*.txt)
 if [ ${#EXPR_FILES[@]} -eq 0 ]; then
     echo "No expression files were found. Make sure your current working directory is the project root."
     exit 1
