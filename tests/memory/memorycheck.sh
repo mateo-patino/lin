@@ -2,6 +2,16 @@
 
 ##########################################
 # This script uses valgrind to check for memory errors in `lin`.
+#
+# This suite considers "success" to be any execution of `lin` without
+# a memory error or that isn't terminated by a signal. Hence, even if 
+# `lin` returns EXIT_FAILURE, this suite will count it as success as
+# long as valgrind doesn't detect any errors.
+#
+# Some key assumptions:
+# 1) `lin` never returns an exit code greater than or equal to 128
+# 2) `lin` never returns the value of memerror_code
+#
 ##########################################
 
 
@@ -78,6 +88,7 @@ fi
 
 # Iterate through the lines in EXPR_FILE and feed each one into `lin`
 pass=0
+crash=0
 total=0
 
 # IFS preserves leading and trailing whitespaces and "$expr" contains the full line.
@@ -92,11 +103,25 @@ for file in "${EXPR_FILES[@]}"; do
         status=$?
         (( total++ ))
 
-        if [[ $status -eq $memerror_code ]]; then
+        # status == memerror_code means a memory error occured. `lin` MUST NOT return memerror_code.
+        if [ $status -eq $memerror_code ]; then
             printf "${ANSI_BOLD}./lin %s ${ANSI_RED}FAILED${ANSI_RESET}\n" "$expr"
 
             # Rerun without the quiet flag to display valgrind report
             valgrind --leak-check=full ./lin "$expr"
+        #
+        # Unix shells generally reserve exit codes >=128 for terminations by signals.
+        # `lin` MUST NOT ever return >=128 on error paths, otherwise a memory-succcessful test
+        # might be confused for a signal termination. This should work as long as you run this
+        # test script in a mainstream Unix shell.
+        #
+        elif [ $status -ge 128 ]; then
+            printf "${ANSI_BOLD}./lin %s ${ANSI_RED}CRASHED${ANSI_RESET}\n" "$expr"
+        #
+        # Any status 128> and not equal to memerror_code is considered either a successful execution
+        # or a failure. In either case, no memory error or signal crash occurred so this memory checker
+        # counts it assuccessful.
+        #
         else
             (( pass++ ))
             printf "${ANSI_BOLD}./lin %s ${ANSI_GREEN}PASS${ANSI_RESET}\n" "$expr"
