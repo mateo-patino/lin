@@ -177,6 +177,7 @@ bool test_valid_ast_medium(void) {
     return true;
 }
 
+
 static bool test_valid_ast_hard(void) {
     node_t *root;
     parse_status st;
@@ -276,44 +277,54 @@ static bool test_valid_ast_hard(void) {
 static bool test_invalid_ast_easy(void) {
     parse_status st;
 
-    /*
-    * This unit test causes a segmentation fault on Linux. Figure it out.
+    /* 
+    * create_ast_from_tokens is the primary function in the parser module. It takes
+    * the array of tokens by the lexer and produces an AST 
     */
+    ASSERT_TRUE(create_ast_from_tokens(NULL, 0, NULL) == NULL);
+    
+    ASSERT_TRUE(create_ast_from_tokens(NULL, 0, &st) == NULL);
+    ASSERT_TRUE(st == PARSE_INVALID_TOKENS);
 
+    /*
+    * create_ast_from_string is NOT part of the parser API. It is simply a helper in
+    * this file that grabs a string, tokenizes it, and feeds the tokens into the parser. 
+    * Internally, it uses create_tokens_from_string (lexer) and create_ast_from_tokens (parser)
+    */
+    clear_error();
     create_ast_from_string("+", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("1 + ", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("+ +", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("1 2 3 4 5 6 7 8 9", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("det", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("det ( inv (  ) )", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
 
+    clear_error();
     create_ast_from_string("add sub div mul det inv rref", &st);
     ASSERT_TRUE(st != PARSE_OK);
     ASSERT_TRUE(has_error() == true);
-    clear_error();
      
     return true;
 }
@@ -414,13 +425,174 @@ static bool test_invalid_ast_hard(void) {
 }
 
 
+static bool test_operator_associativity(void) {
+    node_t *root;
+    parse_status st;
+
+    root = create_ast_from_string("1 + 2 + 3", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_OPERATOR_NODE(root->left, ADD);
+    ASSERT_SCALAR_NODE(root->left->left, 1);
+    ASSERT_SCALAR_NODE(root->left->right, 2);
+    ASSERT_SCALAR_NODE(root->right, 3);
+
+    root = create_ast_from_string("10 - 3 - 2", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, SUB);
+    ASSERT_OPERATOR_NODE(root->left, SUB);
+    ASSERT_SCALAR_NODE(root->left->left, 10);
+    ASSERT_SCALAR_NODE(root->left->right, 3);
+    ASSERT_SCALAR_NODE(root->right, 2);
+
+    root = create_ast_from_string("2 * 3 * 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, MUL);
+    ASSERT_OPERATOR_NODE(root->left, MUL);
+    ASSERT_SCALAR_NODE(root->left->left, 2);
+    ASSERT_SCALAR_NODE(root->left->right, 3);
+    ASSERT_SCALAR_NODE(root->right, 4);
+
+    root = create_ast_from_string("24 / 6 / 2", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DIV);
+    ASSERT_OPERATOR_NODE(root->left, DIV);
+    ASSERT_SCALAR_NODE(root->left->left, 24);
+    ASSERT_SCALAR_NODE(root->left->right, 6);
+    ASSERT_SCALAR_NODE(root->right, 2);
+
+    const scalar_t entries[] = { 1, 0, 0, 1 };
+    const matrix_test_case_t matrix = { "2x2 1 0 0 1", 2, 2, entries };
+
+    root = create_ast_from_string("det inv rref 2x2 1 0 0 1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DET);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right, INV);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right->right, RREF);
+    ASSERT_TRUE(root->right->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right->right, &matrix);
+
+    return true;
+}
+
+static bool test_valid_ast_parentheses(void) {
+    node_t *root;
+    parse_status st;
+
+    root = create_ast_from_string("( 1 )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_SCALAR_NODE(root, 1);
+
+    root = create_ast_from_string("( ( ( 1 ) ) )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_SCALAR_NODE(root, 1);
+
+    root = create_ast_from_string("( 1 ) + ( 2 )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_SCALAR_NODE(root->right, 2);
+
+    const scalar_t entries[] = { 1, 0, 0, 1 };
+    const matrix_test_case_t matrix = { "2x2 1 0 0 1", 2, 2, entries };
+
+    root = create_ast_from_string("( det ( inv ( 2x2 1 0 0 1 ) ) )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, DET);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right, INV);
+    ASSERT_TRUE(root->right->left == NULL);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix);
+
+    return true;
+}
+
+
+static bool test_invalid_ast_parentheses(void) {
+    parse_status st;
+
+    clear_error();
+    create_ast_from_string("( )", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    create_ast_from_string("1 + ( )", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    create_ast_from_string("1 + 1 ( )", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    create_ast_from_string("( 1 + 2", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    create_ast_from_string("1 + 2 )", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    create_ast_from_string(") 1 + 2 (", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    return true;
+}
+
+static bool test_parser_status_reset(void) {
+    node_t *root;
+    parse_status st;
+    const scalar_t entries[] = { 1, 0, 0, 1 };
+    const matrix_test_case_t matrix = { "2x2 1 0 0 1", 2, 2, entries };
+
+    clear_error();
+    create_ast_from_string("1 +", &st);
+    ASSERT_TRUE(st == PARSE_INVALID_EXPRESSION);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    root = create_ast_from_string("1 + 1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_TRUE(has_error() == false);
+    ASSERT_OPERATOR_NODE(root, ADD);
+    ASSERT_SCALAR_NODE(root->left, 1);
+    ASSERT_SCALAR_NODE(root->right, 1);
+
+    clear_error();
+    create_ast_from_string("( 1 + 2", &st);
+    ASSERT_TRUE(st == PARSE_UNBALANCED_PARENS);
+    ASSERT_TRUE(has_error() == true);
+
+    clear_error();
+    root = create_ast_from_string("det 2x2 1 0 0 1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_TRUE(has_error() == false);
+    ASSERT_OPERATOR_NODE(root, DET);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_MATRIX_NODE(root->right, &matrix);
+
+    return true;
+}
+
+
 static const test_case_t parser_tests[] = {
     TEST(test_valid_ast_easy),
     TEST(test_valid_ast_medium),
     TEST(test_valid_ast_hard),
     TEST(test_invalid_ast_easy),
     TEST(test_invalid_ast_medium),
-    TEST(test_invalid_ast_hard)
+    TEST(test_invalid_ast_hard),
+    TEST(test_operator_associativity),
+    TEST(test_valid_ast_parentheses),
+    TEST(test_invalid_ast_parentheses),
+    TEST(test_parser_status_reset)
 };
 
 
