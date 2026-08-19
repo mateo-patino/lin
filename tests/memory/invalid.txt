@@ -1,0 +1,11 @@
+1 +
++ +
+hello
+1 + 2x2 1 2 3 4
+det 100
+inv ( det 100 mul 2x2 1 2 3 4 )
+100 det 1x1 1
+det inv rref
+det ( 3x3 1 2 3 )
+( 1 + 
+1 + 1 (  )
