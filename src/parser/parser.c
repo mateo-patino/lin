@@ -241,8 +241,8 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
         RETURN_NULL_AND_STATUS(PARSE_MEMORY_FAILURE);
     }
 
-    node_t *root = create_ast_helper(tokens, 0, sz-1);
-    if (!root || get_status() != PARSE_OK) {
+    tree->root = create_ast_helper(tokens, 0, sz-1);
+    if (!tree->root || get_status() != PARSE_OK) {
         /* Forward parser status to external caller */
         if (status) { 
             *status = get_status();
@@ -260,7 +260,6 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
     */ 
     clear_status();
 
-    tree->root = root;
     return tree;
 }
 
