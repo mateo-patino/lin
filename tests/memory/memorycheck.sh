@@ -16,7 +16,7 @@ fi
 
 
 # Check `lin` executable exists in current dir
-if [[ ! - x "./lin" ]]; then
+if [ ! - x "./lin" ]; then
     echo "No 'lin' executable was found in the current working directory. Build 'lin' before running the memory checker." >&2
     exit 1
 fi
