@@ -24,7 +24,7 @@ fi
 
 # memerror_code contains the valgrind's exit status should a memory error be found
 # memerror_code cannot be an exit status returned by `lin` on failing execution paths
-memerror_code = 76
+memerror_code=76
 
 # Runs valgrind on `expr`. Takes ONE argument only, the expression to feed into lin.
 run_memory_check() {
@@ -50,6 +50,11 @@ ANSI_CYAN="\033[36m"
 print_summary() {
     local pass="$1"
     local total="$2"
+
+    if [ "$total" -eq 0 ]; then
+        echo "No tests were found." >&2
+        exit 1
+    fi
 
     echo ""
     printf "${ANSI_BOLD}%sSUMMARY%s${ANSI_RESET}\n" "$line" "$line"
@@ -80,7 +85,7 @@ while IFS= read -r expr; do
     status=$?
     (( total++ ))
 
-    if [ $status -eq $memerror_code ]; then
+    if [[ $status -eq $memerror_code ]]; then
         printf "${ANSI_BOLD}./lin %s ${ANSI_RED}FAILED${ANSI_RESET}\n" "$expr"
 
         # Rerun without the quiet flag to display valgrind report
