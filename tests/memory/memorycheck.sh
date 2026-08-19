@@ -68,10 +68,11 @@ print_summary() {
 echo ""
 printf "${ANSI_BOLD}%sMEMORY TESTS%s${ANSI_RESET}\n" "$line" "$line"
 
-# This file contains expression to feed into `lin`
-EXPR_FILE="tests/memory/valid.txt"
-if [ ! -f "$EXPR_FILE" ]; then
-    echo "File '$EXPR_FILE' was not found. Make sure your current working directory is the project root."
+# Expression files must satisfy the pattern below
+shopt -s nullglob # By defaul, Bash fills out an empty glob expansion with the pattern string itself. This disables that.
+EXPR_FILES=("tests/memory/*.txt")
+if [ ${#EXPR_FILES[@]} -eq 0 ]; then
+    echo "No expression files were found. Make sure your current working directory is the project root."
     exit 1
 fi
 
@@ -80,21 +81,30 @@ pass=0
 total=0
 
 # IFS preserves leading and trailing whitespaces and "$expr" contains the full line.
-while IFS= read -r expr; do
-    run_memory_check "$expr"
-    status=$?
-    (( total++ ))
+for file in "${EXPR_FILES[@]}"; do
 
-    if [[ $status -eq $memerror_code ]]; then
-        printf "${ANSI_BOLD}./lin %s ${ANSI_RED}FAILED${ANSI_RESET}\n" "$expr"
+    echo ""
+    printf "${ANSI_BOLD}Running '%s'${ANSI_RESET}\n" "$file"
 
-        # Rerun without the quiet flag to display valgrind report
-        valgrind --leak-check=full ./lin "$expr"
-    else
-        (( pass++ ))
-        printf "${ANSI_BOLD}./lin %s ${ANSI_GREEN}PASS${ANSI_RESET}\n" "$expr"
-    fi
-done < "$EXPR_FILE"
+    while IFS= read -r expr; do
+
+        run_memory_check "$expr"
+        status=$?
+        (( total++ ))
+
+        if [[ $status -eq $memerror_code ]]; then
+            printf "${ANSI_BOLD}./lin %s ${ANSI_RED}FAILED${ANSI_RESET}\n" "$expr"
+
+            # Rerun without the quiet flag to display valgrind report
+            valgrind --leak-check=full ./lin "$expr"
+        else
+            (( pass++ ))
+            printf "${ANSI_BOLD}./lin %s ${ANSI_GREEN}PASS${ANSI_RESET}\n" "$expr"
+        fi
+
+    done < "$file"
+
+done
 
 print_summary "$pass" "$total" 
 
