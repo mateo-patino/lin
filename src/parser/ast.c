@@ -12,7 +12,7 @@ void free_subtree(node_t *node) {
 
 
 void fully_free_ast(ast_t *ast) {
-    if (!ast || !ast->root) {
+    if (!ast) {
         return;
     }
     free_subtree(ast->root);
