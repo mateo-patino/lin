@@ -308,6 +308,7 @@ token_t *create_tokens_from_string(const char *str, size_t *token_count, tokens_
 
     if (token_count) { *token_count = tc; }
     if (status) { *status = TOKENS_OK; }
+    free(m_str);
 
     return tokens;
 
