@@ -222,6 +222,45 @@ static bool has_any_operands(const token_t *tokens, int low, int high) {
 
 
 /*
+* Returns true if `tokens` has balanced parentheses (i.e. all parenthesis opened are closed)
+* and an opening parenthesis always comes before a closing one.
+*/
+static bool has_balanced_parenthesis(const token_t *tokens, size_t sz) {
+    token_type type;
+    int open_count = 0;
+
+    for (size_t i = 0; i < sz; i++) {
+        type = tokens[i].type;
+
+        switch (type) {
+            case SCALAR:
+            case MATRIX:
+            case OPERATOR:
+                continue;
+
+            case LPAREN:
+                open_count++;
+                continue;
+                    
+            case RPAREN:
+                /* ) came before ( */
+                if (open_count == 0) {
+                    return false;
+                }
+                open_count--;
+                continue;
+
+            case TOKENS_END:
+            default:
+                continue;
+        }
+    }
+
+    return !open_count;
+}
+
+
+/*
 * `status` is a variable provided by the caller, and internally, the parser module will
 * have its own (static) `parse_status` variable.
 * 
@@ -231,6 +270,12 @@ static bool has_any_operands(const token_t *tokens, int low, int high) {
 ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *status) {
     if (!tokens || !sz) {
         RETURN_NULL_AND_STATUS(PARSE_INVALID_TOKENS);
+    }
+
+    /* Do parenthesis validation on tokens */
+    if (!has_balanced_parenthesis(tokens, sz)) {
+        set_error("Unbalanced parentheses.");
+        RETURN_NULL_AND_STATUS(PARSE_UNBALANCED_PARENS);
     }
 
     /* Set global status to OK before starting */
