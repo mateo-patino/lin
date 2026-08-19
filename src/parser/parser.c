@@ -231,12 +231,13 @@ static bool has_any_operands(const token_t *tokens, int low, int high) {
 
 
 /*
-* Returns true if `tokens` has balanced parentheses (i.e. all parenthesis opened are closed)
-* and an opening parenthesis always comes before a closing one.
+* Returns true if 1) `tokens` has balanced parentheses (i.e. all parenthesis opened are closed),
+* 2) all opening parenthesis come before closing ones, and 3) all parenthesis have content inside.
 */
 static bool has_balanced_parenthesis(const token_t *tokens, size_t sz) {
     token_type type;
     int open_count = 0;
+    bool expect_content = false;
 
     for (size_t i = 0; i < sz; i++) {
         type = tokens[i].type;
@@ -245,15 +246,17 @@ static bool has_balanced_parenthesis(const token_t *tokens, size_t sz) {
             case SCALAR:
             case MATRIX:
             case OPERATOR:
+                expect_content = false;
                 continue;
 
             case LPAREN:
                 open_count++;
+                expect_content = true;
                 continue;
                     
             case RPAREN:
-                /* ) came before ( */
-                if (open_count == 0) {
+                /* ) came before ( or empty (  ) */
+                if (open_count == 0 || expect_content) {
                     return false;
                 }
                 open_count--;
