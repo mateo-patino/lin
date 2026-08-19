@@ -292,7 +292,7 @@ ast_t *create_ast_from_tokens(const token_t *tokens, size_t sz, parse_status *st
 
     /* Do parenthesis validation on tokens */
     if (!has_balanced_parenthesis(tokens, sz)) {
-        set_error("Unbalanced parentheses.");
+        set_error("Invalid parentheses.");
         RETURN_NULL_AND_CSTATUS(PARSE_UNBALANCED_PARENS, status);
     }
     
@@ -387,6 +387,4 @@ RETURN_NEW_NODE:
  
     return new_node;
 }
-
-
 
