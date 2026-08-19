@@ -6,7 +6,7 @@
 
 
 # Check valgrind exists
-if ! comamnd -v valgrind >/dev/null 2>&1; then
+if ! command -v valgrind >/dev/null 2>&1; then
     cat << END >&2
 Error: valgrind was not found. 
 Install it or use a Linux-based machine where valgrind is supported.
