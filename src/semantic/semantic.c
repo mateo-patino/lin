@@ -30,6 +30,12 @@ static semantic_status get_status(void) {
 }
 
 
+static void clear_status(void) {
+    internal_semantic_status = SEMANTIC_OK;
+    has_error_status = false;
+}
+
+
 /* This function is a helper to set_type_error */
 static const char *op_to_str(operator_type op) {
     switch (op) {
@@ -403,9 +409,13 @@ semantic_status is_semantically_valid_ast(const ast_t *ast, io_type *output_type
     if (!ast || !ast->root) {
         return SEMANTIC_NULL_ARGS;
     }
-    set_status(SEMANTIC_OK); 
+
+    /* Clear status from previous calls */
+    clear_status();
+
     io_type final_output_type = is_valid_ast_helper(ast->root); 
     if (output_type) { *output_type = final_output_type; }
+
     return get_status();
 }
 
