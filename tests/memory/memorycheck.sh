@@ -97,7 +97,7 @@ total=0
 for file in "${EXPR_FILES[@]}"; do
 
     echo ""
-    printf "${ANSI_BOLD}Running '%s'${ANSI_RESET}\n" "$file"
+    printf "${ANSI_BOLD}Reading expressions from '%s'${ANSI_RESET}\n" "$file"
 
     while IFS= read -r expr; do
 
