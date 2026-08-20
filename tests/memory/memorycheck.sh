@@ -55,11 +55,12 @@ ANSI_GREEN="\033[32m"
 ANSI_CYAN="\033[36m"
 
 
-# Prints a test summary. Takes TWO arguments: 1) the number of successes (pass)
-# 2) the total number of tests.
+# Prints a test summary. Takes THREE arguments: 1) the number of successes (pass)
+# 2) the number of crashes, and 3) the total number of tests.
 print_summary() {
     local pass="$1"
-    local total="$2"
+    local crash="$2"
+    local total="$3"
 
     if [ "$total" -eq 0 ]; then
         echo "No tests were found." >&2
@@ -71,6 +72,7 @@ print_summary() {
     printf "${ANSI_BOLD}Total tests: %i${ANSI_RESET}\n" "$total"
     printf "${ANSI_BOLD}Successful: %i${ANSI_RESET}\n" "$pass"
     printf "${ANSI_BOLD}Failed: %i${ANSI_RESET}\n" $(( total - pass ))
+    printf "${ANSI_BOLD}Crashed: %i${ANSI_RESET}\n" $(( crash ))
     printf "${ANSI_BOLD}${ANSI_CYAN}Overall success %.0f%%${ANSI_RESET}\n" $(( 100*pass/total ))
 }
 
@@ -82,7 +84,7 @@ printf "${ANSI_BOLD}%sMEMORY TESTS%s${ANSI_RESET}\n" "$line" "$line"
 shopt -s nullglob # By defaul, Bash fills out an empty glob expansion with the pattern string itself. This disables that.
 EXPR_FILES=(tests/memory/*.txt)
 if [ ${#EXPR_FILES[@]} -eq 0 ]; then
-    echo "No expression files were found. Make sure your current working directory is the project root."
+    echo "No expression files were found. Make sure your current working directory is the project root." >&2
     exit 1
 fi
 
@@ -107,7 +109,6 @@ for file in "${EXPR_FILES[@]}"; do
         if [ $status -eq $memerror_code ]; then
             printf "${ANSI_BOLD}./lin %s ${ANSI_RED}FAILED${ANSI_RESET}\n" "$expr"
 
-            # Rerun without the quiet flag to display valgrind report
             valgrind --leak-check=full ./lin "$expr"
         #
         # Unix shells generally reserve exit codes >=128 for terminations by signals.
@@ -116,7 +117,8 @@ for file in "${EXPR_FILES[@]}"; do
         # test script in a mainstream Unix shell.
         #
         elif [ $status -ge 128 ]; then
-            printf "${ANSI_BOLD}./lin %s ${ANSI_RED}CRASHED${ANSI_RESET}\n" "$expr"
+            printf "${ANSI_BOLD}./lin %s ${ANSI_RED}CRASHED (signal %i)${ANSI_RESET}\n" "$expr" "$(( status - 128 ))"
+            (( crash++ ))
         #
         # Any status 128> and not equal to memerror_code is considered either a successful execution
         # or a failure. In either case, no memory error or signal crash occurred so this memory checker
@@ -131,5 +133,5 @@ for file in "${EXPR_FILES[@]}"; do
 
 done
 
-print_summary "$pass" "$total" 
+print_summary "$pass" "$crash" "$total" 
 
