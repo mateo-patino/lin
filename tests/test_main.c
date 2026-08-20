@@ -1,5 +1,6 @@
 #include "test_lexer.h"
 #include "test_parser.h"
+#include "test_semantic.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -51,6 +52,18 @@ int main(void) {
     total_tests += total_parser;
     total_pass += pass_parser;
     total_crash += crash_parser;
+
+    /* Semantic tests */
+    fputc('\n', stdout);
+    fprintf(stdout, BOLD LINE "SEMANTIC TESTS" LINE ANSI_RESET "\n");
+    uint total_semantic = 0;
+    uint crash_semantic = 0;
+    uint pass_semantic = run_semantic_tests(&total_semantic, &crash_semantic);
+    print_test_summary("Semantic", total_semantic, pass_semantic, crash_semantic);
+
+    total_tests += total_semantic;
+    total_pass += pass_semantic;
+    total_crash += crash_semantic;
     
     /* Overall summary */
     fputc('\n', stdout);
