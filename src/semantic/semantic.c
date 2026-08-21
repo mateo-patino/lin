@@ -324,6 +324,26 @@ static bool set_operand_error(semantic_status stat, operator_type op, const toke
 }
 
 
+static bool is_valid_scalar_token(const token_t *tok) {
+    if (!tok || tok->type != SCALAR || !tok->obj) {
+        return false;
+    }
+
+    scalar_t val = *(scalar_t *)tok->obj;
+
+    return !is_infinite_or_nan_scalar(val);
+}
+
+
+static bool is_valid_matrix_token(const token_t *tok) {
+    if (!tok || tok->type != MATRIX || !tok->obj) {
+        return false;
+    }
+    const matrix_t *mat = (const matrix_t *)tok->obj;
+    return has_finite_entries(mat);
+}
+
+
 /*
 * This function recursively traverses an AST rooted at `node` and perform two kinds
 * of semantic checks on every parent-child-child node triplet: 
@@ -355,10 +375,36 @@ static io_type is_valid_ast_helper(const node_t *node) {
 
     const token_t *token = node->token;
     assert(token != NULL && token->obj != NULL);
+
+    /*
+    * Check if node points to a scalar or matrix. These would be operands directly provided
+    * by the user. is_valid_scalar_token and is_valid_matrix_token only check that these operands
+    * have finite (non-INFINITY and non-NAN) values, not whether they are mathematically valid
+    * for subsequent operators up the tree. Whether they're the right type is checked in "TYPE 
+    * CHECKS" and whether they have the right dimensions, do not result in a foreseeable overflow, 
+    * etc. is done in OPERAND CHECKS.
+    *
+    */
     if (token->type == SCALAR) {
+
+        /* Check the scalar is not NaN or inf */
+        if (!is_valid_scalar_token(token)) {
+            set_error("Infinite or undefined scalar '%s'", token_to_str(token));
+            set_status(SEMANTIC_INFINITE_OR_NAN_SCALAR);
+            return SEM_NULL;
+        }
+
         return SEM_SCALAR;
     }
     else if (token->type == MATRIX) {
+
+        /* Check the matrix's entries are not NaN or inf */
+        if (!is_valid_matrix_token(token)) {
+            set_error("Infinite or undefined matrix entry in '%s'", token_to_str(token));
+            set_status(SEMANTIC_INFINITE_OR_NAN_ENTRY);
+            return SEM_NULL;
+        }
+
         return SEM_MATRIX;
     }
 
@@ -368,8 +414,10 @@ static io_type is_valid_ast_helper(const node_t *node) {
     io_type right_type = is_valid_ast_helper(node->right);
 
 
-    /* Check left and right types match the expected input types. Write to
-    * global error buffer if not. */
+    /* 
+    * TYPE CHECKS: Check left and right types match the expected input types. Write to
+    * global error buffer if not. 
+    */
     operator_type op = *(operator_type *)token->obj;
     if (!are_valid_input_types(op, left_type, right_type)) {
         set_type_error(op, left_type, right_type);
@@ -377,10 +425,11 @@ static io_type is_valid_ast_helper(const node_t *node) {
     }
 
     /* 
-    * Check if `node` is at the second-to-deepest level (i.e. both of its children are 
-    * operands or one is NULL and the other is not), and if so, do operand checks. We 
-    * only do these checks at the bottom of the tree because the operands provided by 
-    * the user are immediately available without any linear algebra computations.
+    * OPERAND CHECKS: check if `node` is at the second-to-deepest level 
+    * (i.e. both of its children are operands or one is NULL and the other is not), 
+    * and if so, do operand checks. We only do these checks at the bottom of the 
+    * tree because the operands provided by the user are immediately available 
+    * without any linear algebra computations.
     */
     semantic_status stat;
     const token_t *left_token, *right_token;
