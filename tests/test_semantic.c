@@ -290,6 +290,14 @@ static bool test_invalid_semantic_hard(void) {
     ASSERT_TRUE(has_error() == true);
     free_semantic_fixture(&fixture);
 
+    /* NEEDSWORK: we should test if is_semantically_valid_ast can catch an operand error
+     * due to a floating-point overflow deep inside the tree. This is somewhat difficult
+     * to test because typing a massive value in string format does not cause a NaN or
+     * infinity (not sure why). Hence, a NaN or inf needs to be programmatically inserted
+     * into the tokens array (like in the test function above) that gets fed into the tree, 
+     * and the tokens array should be large (i.e. lead to a deep AST) like those above. 
+     */
+
     return true;
 }
 
