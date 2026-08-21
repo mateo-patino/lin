@@ -1,4 +1,5 @@
 #include "errorprinter.h"
+#include "arena.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -7,8 +8,40 @@
 #include <stdarg.h>
 
 
+/* 
+* Stores miscellaneous error strings that need to outlive their
+* local scope so they can be read out in main.c during error printing.
+*
+* The semantic module heavily uses this buffer via token_to_str.
+*/
+#define ERRSTR_BUFSIZE KiB(2)
+static char errstrbuf[ERRSTR_BUFSIZE];
+static size_t errstrbuf_offset = 0;
+
+
+char *write_errstr(const char *fmt, ...) {
+    char *idx = errstrbuf + errstrbuf_offset;
+    size_t open_space = ERRSTR_BUFSIZE - errstrbuf_offset;
+
+    va_list args;
+    va_start(args, fmt);
+    int len = vsnprintf(idx, open_space, fmt, args);
+    va_end(args);
+
+    if (len <= 0) {
+        return NULL;
+    }
+    else if ((size_t)len >= open_space) {
+        return NULL;
+    }
+
+    errstrbuf_offset += len + 1;
+    return idx;
+}
+
+
 /* Stores an error message */
-#define ERROR_BUFSIZE 256
+#define ERROR_BUFSIZE KiB(4)
 static char errbuf[ERROR_BUFSIZE];
 static bool has_msg = false;
 

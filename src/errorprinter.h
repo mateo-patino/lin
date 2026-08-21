@@ -5,6 +5,15 @@
 
 
 /*
+* Writes a formatted string with format `fmt` to the error string buffer.
+*
+* It returns a pointer to the string if it was successfully written and
+* NULL otherwise.
+*/
+char *write_errstr(const char *fmt, ...);
+
+
+/*
 * Fills the buffer with '\0'. Any message in the buffer is deleted.
 */
 void clear_error(void) ;
