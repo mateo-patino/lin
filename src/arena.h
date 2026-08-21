@@ -37,6 +37,11 @@
 #include <stdalign.h>
 
 
+#define KiB(n) ((n) * (1ULL << 10))
+#define MiB(n) ((n) * (1ULL << 20))
+#define GiB(n) ((n) * (1ULL << 30))
+
+
 /* Maximum aligned required to allocate any type */
 #define ALIGNMENT alignof(max_align_t)
 
