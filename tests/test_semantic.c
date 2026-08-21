@@ -256,6 +256,66 @@ static bool test_invalid_semantic_medium(void) {
     ASSERT_TRUE(valid_add_operands(&nan_token, &two_token) == SEMANTIC_INFINITE_OR_NAN_SCALAR);
     ASSERT_TRUE(valid_rref_operand(&matrix_token) == SEMANTIC_INFINITE_OR_NAN_ENTRY);
     ASSERT_TRUE(valid_mul_operands(&two_token, &matrix_token) == SEMANTIC_INFINITE_OR_NAN_ENTRY);
+    
+    /*
+     * NEEDSWORK: these tests above can be replaced with simpler versions using create_semantic_fixture
+     * from a string. Writing NAN or INF in the input string produces scalar tokens with NAN or INFINITY 
+     * values. Many new tests can be added using this lexer feature now too.
+     */
+
+    semantic_fixture_t fixture;
+    semantic_status st;
+    
+    clear_error();
+    fixture = create_semantic_fixture("INF");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    printf("st %i\n", st);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    clear_error();
+    fixture = create_semantic_fixture("NAN");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    clear_error();
+    fixture = create_semantic_fixture("1 + 2 + INF");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    clear_error();
+    fixture = create_semantic_fixture("1 + 2 + NAN");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    clear_error();
+    fixture = create_semantic_fixture("1 + 2 + det INF");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+    
+    clear_error();
+    fixture = create_semantic_fixture("1 + 2 + det NAN");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    clear_error();
+    fixture = create_semantic_fixture("rref ( inv NAN ) + 1 + 2");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
 
     return true;
 }
@@ -290,13 +350,13 @@ static bool test_invalid_semantic_hard(void) {
     ASSERT_TRUE(has_error() == true);
     free_semantic_fixture(&fixture);
 
-    /* NEEDSWORK: we should test if is_semantically_valid_ast can catch an operand error
-     * due to a floating-point overflow deep inside the tree. This is somewhat difficult
-     * to test because typing a massive value in string format does not cause a NaN or
-     * infinity (not sure why). Hence, a NaN or inf needs to be programmatically inserted
-     * into the tokens array (like in the test function above) that gets fed into the tree, 
-     * and the tokens array should be large (i.e. lead to a deep AST) like those above. 
-     */
+    /* Should raise an operand error */
+    clear_error();
+    fixture = create_semantic_fixture("det ( inv ( 2x2 4 7 2 5 ) mul ( 3x3 1 2 0 3 4 5 6 7 9 + 3x3 9 0 1 8 2 3 7 6 4 ) - NAN mul ( det ( rref ( 2x2 6 1 4 3 ) ) ) )");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INFINITE_OR_NAN_SCALAR);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
 
     return true;
 }
