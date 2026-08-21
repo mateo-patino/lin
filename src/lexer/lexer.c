@@ -387,6 +387,16 @@ bool is_scalar(const char *str, scalar_t *val) {
         return false;
     }
     
+    /* "NAN" and "INF" tokenize to NAN and INFINITY respectively */
+    if (!strcmp(str, "NAN")) {
+        if (val) { *val = NAN; }
+        return true;
+    }
+    else if (!strcmp(str, "INF")) {
+        if (val) { *val = INFINITY; }
+        return true;
+    }
+    
     char *endptr;
     errno = 0;
     double scalar = strtod(str, &endptr);
