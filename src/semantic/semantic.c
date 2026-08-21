@@ -79,7 +79,6 @@ static void set_type_error(operator_type op, io_type left, io_type right) {
     }
     else {
         unary_type_error = true;
-        printf("op %i\n", op);
         assert(right != SEM_NULL);
     }
      
@@ -258,6 +257,11 @@ static const char *token_to_str(const token_t *tok) {
 
 
 static bool set_operand_error(semantic_status stat, operator_type op, const token_t *left, const token_t *right) {
+    if (has_error()) {
+        return false;
+    }
+
+
     const char *op_str = op_to_str(op);
     bool use_unary_version = false;
 
