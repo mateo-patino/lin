@@ -64,6 +64,10 @@ static const char *op_to_str(operator_type op) {
 * Writes an error message to the global buffer concerning a type error.
 */
 static void set_type_error(operator_type op, io_type left, io_type right) {
+    if (has_error()) {
+        return;
+    }
+
     bool unary_type_error = false;
     const char *op_str = op_to_str(op);
     const char *left_str, *right_str;
@@ -75,6 +79,7 @@ static void set_type_error(operator_type op, io_type left, io_type right) {
     }
     else {
         unary_type_error = true;
+        printf("op %i\n", op);
         assert(right != SEM_NULL);
     }
      
