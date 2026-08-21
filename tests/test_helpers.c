@@ -123,11 +123,16 @@ void print_success(const test_case_t *test_case) {
 
 
 bool is_close(scalar_t a, scalar_t b, scalar_t abs_tol, scalar_t rel_tol) { 
+    /* a == b distinguishes between +INF and -INF (i.e +INF != -INF returns false) */
+    if ((isnan(a) && isnan(b)) || (isinf(a) && a == b)) {
+        return true;
+    }
+
     scalar_t diff = fabs(a - b);
     if (diff <= abs_tol) {
         return true;
     }
-    return diff <= rel_tol * fmax(a, b);
+    return diff <= rel_tol * fmax(fabs(a), fabs(b));
 }
 
 
