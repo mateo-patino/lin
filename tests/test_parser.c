@@ -173,7 +173,22 @@ bool test_valid_ast_medium(void) {
     ASSERT_OPERATOR_NODE(root->right->right, MUL);
     ASSERT_SCALAR_NODE(root->right->right->left, 67);
     ASSERT_MATRIX_NODE(root->right->right->right, &matrix);
-    
+
+
+    /* semantically invalid but should be parsable */
+    const scalar_t entries1[] = { 1, 2, 3, 4 };
+    const matrix_test_case_t matrix1 = { "2x2 1 2 3 4", 2, 2, entries1 };
+
+    root = create_ast_from_string("inv ( det 100 mul 2x2 1 2 3 4 )", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_OPERATOR_NODE(root, INV);
+    ASSERT_TRUE(root->left == NULL);
+    ASSERT_OPERATOR_NODE(root->right, MUL);
+    ASSERT_OPERATOR_NODE(root->right->left, DET);
+    ASSERT_TRUE(root->right->left->left == NULL);
+    ASSERT_SCALAR_NODE(root->right->left->right, 100);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix1);
+
     return true;
 }
 

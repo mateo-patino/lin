@@ -261,6 +261,39 @@ static bool test_invalid_semantic_medium(void) {
 }
 
 
+/* Test that a semantic error deep inside the tree is handled correctly */
+static bool test_invalid_semantic_hard(void) {
+    semantic_fixture_t fixture;
+    semantic_status st;
+
+    /* Should raise a type error */
+    clear_error();
+    fixture = create_semantic_fixture("inv ( det 100 mul 2x2 1 2 3 4 )");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INCOMPATIBLE_OPERANDS);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    /* Should raise a type error */
+    clear_error();
+    fixture = create_semantic_fixture("2 mul 2x2 1 2 3 4 + ( 4 mul 2x2 1 2 3 4 ) + ( 8 mul rref ( inv ( 1 + 2x2 0 1 1 0 ) ) )");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INCOMPATIBLE_OPERANDS);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    /* Should raise an operand error */
+    clear_error();
+    fixture = create_semantic_fixture("det ( 10 mul ( 2x2 1 2 3 4 mul 2x2 5 6 7 8 ) + 100 mul ( inv 2x2 1 1 1 1 + rref ( 2x2 1 2 3 4 + 1x1 1 ) ) )");
+    st = is_semantically_valid_ast(fixture.ast, NULL);
+    ASSERT_TRUE(st == SEMANTIC_INCOMPATIBLE_DIMENSIONS);
+    ASSERT_TRUE(has_error() == true);
+    free_semantic_fixture(&fixture);
+
+    return true;
+}
+
+
 static bool test_semantic_status_reset(void) {
     semantic_fixture_t fixture;
     semantic_status st;
@@ -306,6 +339,7 @@ static const test_case_t semantic_tests[] = {
     TEST(test_valid_semantic_medium),
     TEST(test_invalid_semantic_easy),
     TEST(test_invalid_semantic_medium),
+    TEST(test_invalid_semantic_hard),
     TEST(test_semantic_status_reset)
 };
 
