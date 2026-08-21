@@ -47,6 +47,10 @@ static node_t *create_ast_from_string(const char *expr, parse_status *status) {
 static bool test_valid_ast_easy(void) { 
     node_t *root;
     parse_status st;
+
+    root = create_ast_from_string("1", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_SCALAR_NODE(root, 1);
     
     root = create_ast_from_string("1 + 1", &st);
     ASSERT_TRUE(st == PARSE_OK);
@@ -99,6 +103,22 @@ bool test_valid_ast_medium(void) {
     node_t *root;
     parse_status st;
 
+    /* Should be valid for parsing. The semantics layer is responsible for catching the NaN */
+    root = create_ast_from_string("NAN", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_SCALAR_NODE(root, NAN);
+    
+    root = create_ast_from_string("INF", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_SCALAR_NODE(root, INFINITY);
+     
+    const scalar_t ent[] = { 1, 2, NAN, 4 };
+    matrix_test_case_t mat = { NULL, 2, 2, ent };
+    
+    root = create_ast_from_string("2x2 1 2 NAN 4", &st);
+    ASSERT_TRUE(st == PARSE_OK);
+    ASSERT_MATRIX_NODE(root, &mat);
+
     root = create_ast_from_string("1 + 2 * 3 / 4", &st);
     ASSERT_TRUE(st == PARSE_OK);
     ASSERT_OPERATOR_NODE(root, ADD);
@@ -130,8 +150,8 @@ bool test_valid_ast_medium(void) {
     ASSERT_SCALAR_NODE(root->right->right, 4);
 
 
-    const scalar_t entries[] = { 1, 0, 0, 1};
-    const matrix_test_case_t matrix = { "2x2 1 0 0 1", 2, 2, entries };
+    const scalar_t entries0[] = { 1, 0, 0, 1};
+    const matrix_test_case_t matrix0 = { "2x2 1 0 0 1", 2, 2, entries0 };
 
     root = create_ast_from_string("1 + det 2x2 1 0 0 1", &st);
     ASSERT_TRUE(st == PARSE_OK);
@@ -139,7 +159,7 @@ bool test_valid_ast_medium(void) {
     ASSERT_SCALAR_NODE(root->left, 1);
     ASSERT_OPERATOR_NODE(root->right, DET);
     ASSERT_TRUE(root->right->left == NULL);
-    ASSERT_MATRIX_NODE(root->right->right, &matrix);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix0);
 
     /* should behave as 1 + ( det 2x2 1 0 0 1 * 2 ) */
     root = create_ast_from_string("1 + det 2x2 1 0 0 1 * 2", &st);
@@ -150,7 +170,7 @@ bool test_valid_ast_medium(void) {
     ASSERT_OPERATOR_NODE(root->right->left, DET);
     ASSERT_SCALAR_NODE(root->right->right, 2);
     ASSERT_TRUE(root->right->left->left == NULL);
-    ASSERT_MATRIX_NODE(root->right->left->right, &matrix);
+    ASSERT_MATRIX_NODE(root->right->left->right, &matrix0);
 
     /* should behave as ( det 2x2 1 0 0 1 ) * ( inv 2x2 1 0 0 1 ) */
     root = create_ast_from_string("det 2x2 1 0 0 1 * inv 2x2 1 0 0 1", &st);
@@ -159,9 +179,9 @@ bool test_valid_ast_medium(void) {
     ASSERT_OPERATOR_NODE(root->left, DET);
     ASSERT_OPERATOR_NODE(root->right, INV);
     ASSERT_TRUE(root->left->left == NULL);
-    ASSERT_MATRIX_NODE(root->left->right, &matrix);
+    ASSERT_MATRIX_NODE(root->left->right, &matrix0);
     ASSERT_TRUE(root->right->left == NULL);
-    ASSERT_MATRIX_NODE(root->right->right, &matrix);
+    ASSERT_MATRIX_NODE(root->right->right, &matrix0);
 
     /* should behave as rref ( inv ( 67 * 2x2 1 0 0 1 ) ) */
     root = create_ast_from_string("rref inv ( 67 * 2x2 1 0 0 1 )", &st);
@@ -172,7 +192,7 @@ bool test_valid_ast_medium(void) {
     ASSERT_TRUE(root->right->left == NULL);
     ASSERT_OPERATOR_NODE(root->right->right, MUL);
     ASSERT_SCALAR_NODE(root->right->right->left, 67);
-    ASSERT_MATRIX_NODE(root->right->right->right, &matrix);
+    ASSERT_MATRIX_NODE(root->right->right->right, &matrix0);
 
 
     /* semantically invalid but should be parsable */
