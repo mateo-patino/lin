@@ -7,6 +7,11 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+/*
+* CONTINUE: use this write_errstr function to do richer printing
+* in token_to_str in the semantic module
+*/
+
 
 /* 
 * Stores miscellaneous error strings that need to outlive their
@@ -18,10 +23,9 @@
 static char errstrbuf[ERRSTR_BUFSIZE];
 static size_t errstrbuf_offset = 0;
 
-
 char *write_errstr(const char *fmt, ...) {
     char *idx = errstrbuf + errstrbuf_offset;
-    size_t open_space = ERRSTR_BUFSIZE - errstrbuf_offset;
+    size_t open_space = get_errstrbuf_space();
 
     va_list args;
     va_start(args, fmt);
@@ -37,6 +41,23 @@ char *write_errstr(const char *fmt, ...) {
 
     errstrbuf_offset += len + 1;
     return idx;
+}
+
+
+char *write_errchar(char c) {
+    if (get_errstrbuf_space() >= 2) {
+        return NULL;
+    }
+    char *idx = errstrbuf + errstrbuf_offset;
+    *idx = c;
+    errstrbuf_offset++;
+
+    return idx;
+}
+
+
+size_t get_errstrbuf_space(void) {
+    return (size_t)(ERRSTR_BUFSIZE - errstrbuf_offset);
 }
 
 

@@ -14,6 +14,27 @@ char *write_errstr(const char *fmt, ...);
 
 
 /*
+* Writes a single character c to the error string buffer at the current offset.
+* It returns a pointer to the byte where the character was written and NULL
+* if no character was written.
+*
+* This function is necessary for writing matrix entries to the error string buffer
+* which can have a variable number of arguments that is not known until runtime.
+* NOTE: this function will enable you to write a character to the buffer as long
+* as there are two spaces available (one for `c` and the other presumably for a NUL
+* terminator). However, the function does not explictly check for a trailing NUL nor 
+* will it write one for you. 
+*/
+char *write_errchar(char c);
+
+
+/*
+* Returns the number of available bytes in the error string buffer.
+*/
+size_t get_errstrbuf_space(void);
+
+
+/*
 * Fills the buffer with '\0'. Any message in the buffer is deleted.
 */
 void clear_error(void) ;
